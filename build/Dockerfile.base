@@ -1,0 +1,71 @@
+FROM ubuntu:22.04
+
+SHELL ["/bin/bash", "--login", "-c"]
+
+RUN apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        build-essential && \
+        gfortran && \
+    rm -rf /var/lib/apt/lists/*
+
+# MKL version 2020.0-088
+RUN apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        apt-transport-https \
+        ca-certificates \
+        gnupg \
+        wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN wget -qO - https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2019.PUB | apt-key add - && \
+    echo "deb https://apt.repos.intel.com/mkl all main" >> /etc/apt/sources.list.d/hpccm.list && \
+    apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        intel-mkl-64bit-2020.0-088 && \
+    rm -rf /var/lib/apt/lists/*
+RUN echo "source /opt/intel/mkl/bin/mklvars.sh intel64" >> /etc/bash.bashrc
+
+# OpenBLAS version 0.3.21
+RUN apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        make \
+        perl \
+        tar \
+        wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://github.com/xianyi/OpenBLAS/archive/v0.3.21.tar.gz && \
+    mkdir -p /var/tmp && tar -x -f /var/tmp/v0.3.21.tar.gz -C /var/tmp -z && \
+    cd /var/tmp/OpenBLAS-0.3.21 && \
+    make TARGET=SKYLAKEX USE_OPENMP=1 && \
+    mkdir -p /opt/openblas && \
+    cd /var/tmp/OpenBLAS-0.3.21 && \
+    make install PREFIX=/opt/openblas && \
+    rm -rf /var/tmp/OpenBLAS-0.3.21 /var/tmp/v0.3.21.tar.gz
+ENV LD_LIBRARY_PATH=/opt/openblas/lib:$LD_LIBRARY_PATH
+
+COPY aocl/aocl-blis-linux-aocc-4.0.tar.gz \
+    aocl/aocl-libflame-linux-aocc-4.0.tar.gz \
+    aocl/aocl-blis-linux-gcc-4.0.tar.gz \
+    aocl/aocl-libflame-linux-gcc-4.0.tar.gz \
+    /tmp/
+
+RUN mkdir /opt/amd && \
+    tar -xf /tmp/aocl-blis-linux-aocc-4.0.tar.gz -C /opt/amd && \
+    tar -xf /tmp/aocl-libflame-linux-aocc-4.0.tar.gz -C /opt/amd && \
+    mkdir /opt/amd_gcc && \
+    tar -xf /tmp/aocl-blis-linux-gcc-4.0.tar.gz -C /opt/amd_gcc && \
+    tar -xf /tmp/aocl-libflame-linux-gcc-4.0.tar.gz -C /opt/amd_gcc
+
+# Anaconda
+RUN apt-get update -y && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
+        wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp http://repo.anaconda.com/miniconda/Miniconda3-py310_23.1.0-1-Linux-x86_64.sh && \
+    bash /var/tmp/Miniconda3-py310_23.1.0-1-Linux-x86_64.sh -b -p /usr/local/anaconda && \
+    /usr/local/anaconda/bin/conda init && \
+    ln -s /usr/local/anaconda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    /usr/local/anaconda/bin/conda clean -afy && \
+    rm -rf /var/tmp/Miniconda3-py310_23.1.0-1-Linux-x86_64.sh
+
+
