@@ -1,0 +1,6 @@
+outs:
+- md5: 895387035ca01ad5163e7498c31658ba.dir
+  size: 1132464640
+  nfiles: 20
+  hash: md5
+  path: parihaka
