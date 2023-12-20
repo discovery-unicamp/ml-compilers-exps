@@ -3,3 +3,4 @@
 *.tar.gz
 *.csv
 *.npy
+Dockerfile*

@@ -1,7 +1,10 @@
-python_version = USERARG.get("python-version", "3.10.8")
+python_version = USERARG.get("python-version", "3.10.13")
 tvm_version = USERARG.get("tvm-version", "0.14.dev16")
+numpy_version = USERARG.get("numpy-version", "1.24.3")
+scipy_version = USERARG.get("scipy-version", "1.10.1")
+base_image = USERARG.get("base-image", "tvm:base")
 
-Stage0 += baseimage(image="tvm:base")
+Stage0 += baseimage(image=base_image)
 
 Stage0 += raw(
     docker='SHELL ["/bin/bash", "--login", "-c"]', singularity="# no equivalent"
@@ -15,19 +18,23 @@ Stage0 += shell(
     commands=[
         f"conda create -n default python={python_version}",
         "conda activate default",
-        "pip install scipy==1.7.3 jupyter",
-        "pip install numpy==1.23.5",
-        f"pip install --no-deps apache-tvm=={tvm_version} cloudpickle==2.2.1 ml-dtypes==0.2",
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+                        dacite dask dask_cuda dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
+                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
+                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
+        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
 
 Stage0 += shell(
     commands=[
-        "git clone --depth 1 --branch v1.23.5 https://github.com/numpy/numpy.git",
+        f"git clone --depth 1 --branch v{numpy_version} https://github.com/numpy/numpy.git",
         "cd numpy",
         "git submodule update --init",
         "cd ..",
-        "git clone --depth 1 --branch v1.7.3 https://github.com/scipy/scipy.git",
+        f"git clone --depth 1 --branch v{scipy_version} https://github.com/scipy/scipy.git",
         "cd scipy",
         "git submodule update --init",
     ]
@@ -43,8 +50,13 @@ Stage0 += shell(
         "NPY_BLAS_ORDER=openblas NPY_LAPACK_ORDER=openblas python setup.py build -j 4 install",
         "rm -r build",
         "rm site.cfg",
-        "pip install jupyter",
-        f"pip install --no-deps apache-tvm=={tvm_version} cloudpickle==2.2.1 ml-dtypes==0.2",
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+                        dacite dask dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
+                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
+                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
+        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
 
@@ -60,8 +72,13 @@ Stage0 += shell(
         "NPY_BLAS_ORDER=blis NPY_LAPACK_ORDER=flame python setup.py build -j 4 install",
         "rm -r build",
         "rm site.cfg",
-        "pip install jupyter",
-        f"pip install --no-deps apache-tvm=={tvm_version} cloudpickle==2.2.1 ml-dtypes==0.2",
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+                        dacite dask dask_cuda dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
+                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
+                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
+        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
 
@@ -77,24 +94,13 @@ Stage0 += shell(
         "NPY_BLAS_ORDER=blis NPY_LAPACK_ORDER=flame python setup.py build -j 4 install",
         "rm -r build",
         "rm site.cfg",
-        "pip install jupyter",
-        f"pip install --no-deps apache-tvm=={tvm_version} cloudpickle==2.2.1 ml-dtypes==0.2",
-    ]
-)
-
-Stage0 += comment("Intel MKL source env")
-Stage0 += shell(
-    commands=[
-        f"conda create -n intel_src python={python_version}",
-        "conda activate intel_src",
-        "cd numpy",
-        "echo -e '[mkl]\\nlibrary_dirs = /opt/intel/compilers_and_libraries_2020/linux/mkl/lib/intel64\\ninclude_dirs = /opt/intel/compilers_and_libraries_2020/linux/mkl/include\\nlibraries = mkl_rt' > site.cfg",
-        "pip install 'Cython<3.0.0'",
-        "NPY_BLAS_ORDER=mkl NPY_LAPACK_ORDER=mkl python setup.py build -j 4 install",
-        "rm -r build",
-        "rm site.cfg",
-        "pip install jupyter",
-        f"pip install --no-deps apache-tvm=={tvm_version} cloudpickle==2.2.1 ml-dtypes==0.2",
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+                        dacite dask dask_cuda dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
+                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
+                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
+        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
 
@@ -104,7 +110,12 @@ Stage0 += shell(
         "conda config --add channels intel",
         f"conda create -n intel_conda intelpython3_core python={python_version}",
         "conda activate intel_conda",
-        "pip install jupyter",
-        f"pip install --no-deps apache-tvm=={tvm_version} cloudpickle==2.2.1 ml-dtypes==0.2",
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+                        dacite dask dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
+                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
+                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
+        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
