@@ -19,12 +19,11 @@ Stage0 += shell(
         f"conda create -n default python={python_version}",
         "conda activate default",
         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
-                        dacite dask dask_cuda dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
-                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
-                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        dacite dask dask_jobqueue dask_memusage GPUtil \
+                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow xarray scikit-image \
+                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
                         bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
-        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
 
@@ -32,10 +31,6 @@ Stage0 += shell(
     commands=[
         f"git clone --depth 1 --branch v{numpy_version} https://github.com/numpy/numpy.git",
         "cd numpy",
-        "git submodule update --init",
-        "cd ..",
-        f"git clone --depth 1 --branch v{scipy_version} https://github.com/scipy/scipy.git",
-        "cd scipy",
         "git submodule update --init",
     ]
 )
@@ -51,12 +46,11 @@ Stage0 += shell(
         "rm -r build",
         "rm site.cfg",
         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
-                        dacite dask dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
-                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
-                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        dacite dask dask_jobqueue dask_memusage GPUtil \
+                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow xarray scikit-image \
+                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
                         bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
-        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
 
@@ -73,12 +67,11 @@ Stage0 += shell(
         "rm -r build",
         "rm site.cfg",
         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
-                        dacite dask dask_cuda dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
-                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
-                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        dacite dask dask_jobqueue dask_memusage GPUtil \
+                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow xarray scikit-image \
+                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
                         bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
-        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
 
@@ -95,12 +88,11 @@ Stage0 += shell(
         "rm -r build",
         "rm site.cfg",
         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
-                        dacite dask dask_cuda dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
-                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
-                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        dacite dask dask_jobqueue dask_memusage GPUtil \
+                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow xarray scikit-image \
+                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
                         bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
-        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
 
@@ -111,11 +103,10 @@ Stage0 += shell(
         f"conda create -n intel_conda intelpython3_core python={python_version}",
         "conda activate intel_conda",
         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
-                        dacite dask dask_jobqueue dask_memusage dask_ml dask-pytorch-ddp GPUtil \
-                        gdown graphviz h5py hdbscan ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow pytorch-lightning scikit-learn torchvision xarray \
-                        xgboost zarr glcm-cupy multidimio scikit-image segyio segysak py-cpuinfo \
+                        dacite dask dask_jobqueue dask_memusage GPUtil \
+                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
+                        portalocker psutil pyarrow xarray scikit-image \
+                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
                         bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
-        "pip install --extra-index-url https://test.pypi.org/simple/ XPySom-dask"
     ]
 )
