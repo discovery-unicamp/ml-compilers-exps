@@ -16,7 +16,7 @@ def run_experiments(args):
             else list(scope.keys())[-1]
         )
         scope = scope[exp_id]
-    run_index = os.path.join(os.getcwd(), "experiments", "results", "index.json")
+    run_index = os.path.join(os.getcwd(), "experiments", "results", exp_id, "index.json")
     run_specs = {
         "CPU": args.cpu and "CPU" in scope,
         "GPU": args.gpu and "GPU" in scope,
