@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+from time import perf_counter
 
 import tvm
 from tvm import te, auto_scheduler
@@ -84,7 +85,7 @@ def build_module(args):
     tgt = tvm.target.Target(
         target=profiles[args.arch][build_profile[args.arch]], host="llvm"
     )
-
+    start = perf_counter()
     name = f"{args.operator}_{args.arch}"
     if build_profile["sch"] == 0:  # Default
         computation_context = {
@@ -157,6 +158,7 @@ def build_module(args):
     else:
         raise NotImplementedError("Scheduler Option not implemented")
     build.export_library(os.path.join(args.build_path, f"{name}.so"))
+    print(f"BUILD TOOK: {perf_counter() - start}s")
 
 
 if __name__ == "__main__":

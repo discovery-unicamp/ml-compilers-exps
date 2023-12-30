@@ -523,7 +523,7 @@ class Sweetness:
             "result"
         ][0]
 
-        freq = self._freq._set_computation_context({"X": freq, "x": x, "y": y, "z": z})[
+        freq = self._freq._set_computation_context({"X": X, "x": x, "y": y, "z": z})[
             "result"
         ][0]
 
@@ -574,7 +574,7 @@ class QualityFactor:
             "result"
         ][0]
 
-        freq = self._freq._set_computation_context({"X": freq, "x": x, "y": y, "z": z})[
+        freq = self._freq._set_computation_context({"X": X, "x": x, "y": y, "z": z})[
             "result"
         ][0]
 

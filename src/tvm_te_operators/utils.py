@@ -227,12 +227,14 @@ class CumSum:
         return (cumsum,)
 
     def _computation_kernel_2(self, X, x, y, z):
-        cumsum = X
-        for step in range(0, z):
+        cumsum = te.compute(
+            (x, y, 1), lambda i, j, k: X[i, j, k], name=get_name("step_0")
+        )
+        for step in range(1, z):
             aux = te.compute(
-                (x, y, z),
+                (x, y, step + 1),
                 lambda i, j, k: te.if_then_else(
-                    k <= step, cumsum[i, j, k], cumsum[i, j, k] + X[i, j, step]
+                    k < step, cumsum[i, j, k], cumsum[i, j, k - 1] + X[i, j, k]
                 ),
                 name=get_name(f"step_{step}"),
             )
@@ -274,13 +276,13 @@ class Unwrap:
         interval_low = te.const(-self._period / 2, X.dtype)
         discont = te.const(self._dicont, X.dtype)
         dd = te.compute(
-            (x, y, z),
-            lambda i, j, k: te.if_then_else(k == 0, 0, X[i, j, k + 1] - X[i, j, k]),
+            (x, y, z - 1),
+            lambda i, j, k: X[i, j, k + 1] - X[i, j, k],
             name=get_name("dd"),
         )
 
         ddmod = te.compute(
-            (x, y, z),
+            (x, y, z - 1),
             lambda i, j, k: te.if_then_else(
                 dd[i, j, k] - interval_low >= 0,
                 te.fmod(dd[i, j, k] - interval_low, period) + interval_low,
@@ -290,7 +292,7 @@ class Unwrap:
         )
 
         boundary_amb = te.compute(
-            (x, y, z),
+            (x, y, z - 1),
             lambda i, j, k: te.if_then_else(
                 te.all(ddmod[i, j, k] == interval_low, dd[i, j, k] > 0),
                 interval_high,
@@ -300,7 +302,7 @@ class Unwrap:
         )
 
         ph_correct = te.compute(
-            (x, y, z),
+            (x, y, z - 1),
             lambda i, j, k: te.if_then_else(
                 te.abs(dd[i, j, k]) < discont,
                 0,
@@ -310,12 +312,16 @@ class Unwrap:
         )
 
         ph_correct_cumsum = self._cumsum._set_computation_context(
-            {"X": ph_correct, "x": x, "y": y, "z": z}
+            {"X": ph_correct, "x": x, "y": y, "z": z - 1}
         )["result"][0]
 
         result = te.compute(
             (x, y, z),
-            lambda i, j, k: X[i, j, k] + ph_correct_cumsum[i, j, k],
+            lambda i, j, k: te.if_then_else(
+                k == 0,
+                X[i, j, k],
+                X[i, j, k] + ph_correct_cumsum[i, j, k - 1],
+            ),
             name=get_name("unwrap"),
         )
 
