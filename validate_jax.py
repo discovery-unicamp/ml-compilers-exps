@@ -1,0 +1,146 @@
+import argparse
+import os
+import subprocess
+from glob import glob
+import numpy as np
+import jax
+
+jax.config.update("jax_enable_x64", True)
+
+from pathlib import Path
+from src.jax_operators.operator_generic import JAXOperator
+from src.dasf_seismic.attributes.complex_trace import *
+from time import perf_counter
+
+
+operators = {
+    # "envelope": Envelope,
+    # "inst-phase": InstantaneousPhase,
+    # "cos-inst-phase": CosineInstantaneousPhase,
+    # "relative-amplitude-change": RelativeAmplitudeChange,
+    # "amplitude-acceleration": AmplitudeAcceleration,
+    # "inst-frequency": InstantaneousFrequency,
+    # "inst-bandwidth": InstantaneousBandwidth,
+    # "dominant-frequency": DominantFrequency,
+    # "frequency-change": FrequencyChange,
+    # "sweetness": Sweetness,
+    # "quality-factor": QualityFactor,
+    "response-phase": ResponsePhase,
+    "response-frequency": ResponseFrequency,
+    "response-amplitude": ResponseAmplitude,
+    "apparent-polarity": ApparentPolarity,
+}
+
+
+def get_git_revision_hash():
+    subprocess.check_output(
+        ["git", "config", "--global", "--add", "safe.directory", os.getcwd()]
+    )  # bypass git repo ownership that leads to a problem when running inside a Docker container
+    return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
+
+
+def header_arch(arch, filepath):
+    with open(filepath, "a") as f:
+        f.write(f"{'#'*420}\n#{arch.center(418)}#\n{'#'*420}\n")
+
+
+def header_op(op, filepath):
+    with open(filepath, "a") as f:
+        f.write(f"{op.center(420, '+')}\n")
+
+
+def validate(args):
+    with open(args.file, "w") as f:
+        f.write(f"GIT HASH: {get_git_revision_hash()}\n")
+    dataset_base = os.path.join("data", args.dataset, "*")
+    if args.cpu:
+        header_arch("CPU", args.file)
+        for op in operators.keys():
+            op_jax = JAXOperator(op)
+            op_base = operators[op]()
+            header_op(op, args.file)
+            for sh in sorted(glob(dataset_base)):
+                results = {"float32": [], "float64": []}
+                for dataset in sorted(glob(os.path.join(sh, "*"))):
+                    for dtype in results.keys():
+                        data = np.load(dataset).astype(dtype)
+                        data_jax = jax.device_put(data, device=jax.devices("cpu")[0])
+                        start = perf_counter()
+                        res_jax = op_jax._transform_cpu(data_jax)
+                        print(perf_counter() - start)
+                        return
+                        res_base = op_base._transform_cpu(data)
+                        err = np.abs(res_jax - res_base)
+                        results[dtype].append((err.mean(), err.std(), err.max()))
+                with open(args.file, "a") as f:
+                    for dtype, result in results.items():
+                        result_str = [
+                            "|".join(list(map(str, r))).center(75) for r in result
+                        ]
+                        f.write(
+                            f"{sh.center(30)} {dtype.center(9)} {' '.join(result_str)}\n"
+                        )
+    if args.gpu:
+        import cupy as cp
+
+        header_arch("GPU", args.file)
+        for op in operators.keys():
+            op_jax = JAXOperator(op)
+            op_base = operators[op]()
+            header_op(op, args.file)
+            for sh in sorted(glob(dataset_base)):
+                results = {"float32": [], "float64": []}
+                for dataset in sorted(glob(os.path.join(sh, "*"))):
+                    for dtype in results.keys():
+                        data = cp.load(dataset).astype(dtype)
+                        data_jax = jax.device_put(data, device=jax.devices("gpu")[0])
+                        res_jax = op_jax._transform_gpu(data_jax)
+                        res_base = op_base._transform_gpu(data)
+                        err = cp.abs(res_jax - res_base)
+                        results[dtype].append((err.mean(), err.std(), err.max()))
+                with open(args.file, "a") as f:
+                    for dtype, result in results.items():
+                        result_str = [
+                            "|".join(list(map(str, r))).center(75) for r in result
+                        ]
+                        f.write(
+                            f"{sh.center(30)} {dtype.center(9)} {' '.join(result_str)}\n"
+                        )
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-f",
+        "--file",
+        help="path to validation report",
+        type=Path,
+        required=True,
+        default=None,
+    )
+
+    parser.add_argument(
+        "-c",
+        "--cpu",
+        help="CPU will be used",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-g",
+        "--gpu",
+        help="GPU will be used",
+        action="store_true",
+    )
+
+    parser.add_argument(
+        "-d",
+        "--dataset",
+        help="dataset to use",
+        type=str,
+        choices=["parihaka"],
+        default="parihaka",
+    )
+
+    args = parser.parse_args()
+    validate(args)
