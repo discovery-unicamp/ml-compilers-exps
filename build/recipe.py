@@ -1,5 +1,4 @@
 python_version = USERARG.get("python-version", "3.10.13")
-tvm_version = USERARG.get("tvm-version", "0.14.dev16")
 numpy_version = USERARG.get("numpy-version", "1.24.3")
 scipy_version = USERARG.get("scipy-version", "1.10.1")
 base_image = USERARG.get("base-image", "tvm:base")
@@ -18,7 +17,7 @@ Stage0 += shell(
     commands=[
         f"conda create -n default python={python_version}",
         "conda activate default",
-        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
                         dacite dask dask_jobqueue dask_memusage GPUtil \
                         gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
                         portalocker psutil pyarrow xarray scikit-image \
@@ -45,7 +44,7 @@ Stage0 += shell(
         "NPY_BLAS_ORDER=openblas NPY_LAPACK_ORDER=openblas python setup.py build -j 4 install",
         "rm -r build",
         "rm site.cfg",
-        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
                         dacite dask dask_jobqueue dask_memusage GPUtil \
                         gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
                         portalocker psutil pyarrow xarray scikit-image \
@@ -66,7 +65,7 @@ Stage0 += shell(
         "NPY_BLAS_ORDER=blis NPY_LAPACK_ORDER=flame python setup.py build -j 4 install",
         "rm -r build",
         "rm site.cfg",
-        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
                         dacite dask dask_jobqueue dask_memusage GPUtil \
                         gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
                         portalocker psutil pyarrow xarray scikit-image \
@@ -87,7 +86,7 @@ Stage0 += shell(
         "NPY_BLAS_ORDER=blis NPY_LAPACK_ORDER=flame python setup.py build -j 4 install",
         "rm -r build",
         "rm site.cfg",
-        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
                         dacite dask dask_jobqueue dask_memusage GPUtil \
                         gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
                         portalocker psutil pyarrow xarray scikit-image \
@@ -102,7 +101,7 @@ Stage0 += shell(
         "conda config --add channels intel",
         f"conda create -n intel_conda intelpython3_core python={python_version}",
         "conda activate intel_conda",
-        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter apache-tvm=={tvm_version} \
+        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
                         dacite dask dask_jobqueue dask_memusage GPUtil \
                         gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
                         portalocker psutil pyarrow xarray scikit-image \

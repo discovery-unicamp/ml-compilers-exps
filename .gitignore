@@ -5,3 +5,4 @@
 *.npy
 Dockerfile*
 *.log
+__pycache__/
