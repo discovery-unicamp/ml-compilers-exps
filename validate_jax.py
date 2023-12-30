@@ -2,33 +2,32 @@ import argparse
 import os
 import subprocess
 from glob import glob
+
 import numpy as np
 import jax
-
 jax.config.update("jax_enable_x64", True)
 
 from pathlib import Path
 from src.jax_operators.operator_generic import JAXOperator
 from src.dasf_seismic.attributes.complex_trace import *
-from time import perf_counter
 
 
 operators = {
-    # "envelope": Envelope,
-    # "inst-phase": InstantaneousPhase,
-    # "cos-inst-phase": CosineInstantaneousPhase,
-    # "relative-amplitude-change": RelativeAmplitudeChange,
-    # "amplitude-acceleration": AmplitudeAcceleration,
-    # "inst-frequency": InstantaneousFrequency,
-    # "inst-bandwidth": InstantaneousBandwidth,
-    # "dominant-frequency": DominantFrequency,
-    # "frequency-change": FrequencyChange,
-    # "sweetness": Sweetness,
-    # "quality-factor": QualityFactor,
-    "response-phase": ResponsePhase,
-    "response-frequency": ResponseFrequency,
-    "response-amplitude": ResponseAmplitude,
-    "apparent-polarity": ApparentPolarity,
+    "envelope": Envelope,
+    "inst-phase": InstantaneousPhase,
+    "cos-inst-phase": CosineInstantaneousPhase,
+    "relative-amplitude-change": RelativeAmplitudeChange,
+    "amplitude-acceleration": AmplitudeAcceleration,
+    "inst-frequency": InstantaneousFrequency,
+    "inst-bandwidth": InstantaneousBandwidth,
+    "dominant-frequency": DominantFrequency,
+    "frequency-change": FrequencyChange,
+    "sweetness": Sweetness,
+    "quality-factor": QualityFactor,
+    # "response-phase": ResponsePhase,
+    # "response-frequency": ResponseFrequency,
+    # "response-amplitude": ResponseAmplitude,
+    # "apparent-polarity": ApparentPolarity,
 }
 
 
@@ -65,10 +64,7 @@ def validate(args):
                     for dtype in results.keys():
                         data = np.load(dataset).astype(dtype)
                         data_jax = jax.device_put(data, device=jax.devices("cpu")[0])
-                        start = perf_counter()
                         res_jax = op_jax._transform_cpu(data_jax)
-                        print(perf_counter() - start)
-                        return
                         res_base = op_base._transform_cpu(data)
                         err = np.abs(res_jax - res_base)
                         results[dtype].append((err.mean(), err.std(), err.max()))
