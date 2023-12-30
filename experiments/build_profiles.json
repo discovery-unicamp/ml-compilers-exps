@@ -1,0 +1,47 @@
+{
+    "cpu": [
+        {
+            "kind": "llvm",
+            "mattr": [
+                "+avx512f",
+                "+mmx"
+            ],
+            "fast-math": true
+        },
+        {
+            "kind": "llvm",
+            "mattr": [
+                "+mmx"
+            ],
+            "fast-math": true
+        }
+    ],
+    "gpu": [
+        {
+            "kind": "cuda"
+        }
+    ],
+    "schedule": [
+        "Default",
+        "Ansor",
+        "AutoTVM"
+    ],
+    "ansor": [
+        {
+            "tune_options": {
+                "num_measure_trials": 10
+            },
+            "sketch_policy": {
+                "sample_init_min_population": 1
+            }
+        },
+        {
+            "tune_options": {
+                "num_measure_trials": 1000
+            },
+            "sketch_policy": {
+                "sample_init_min_population": 1
+            }
+        }
+    ]
+}
