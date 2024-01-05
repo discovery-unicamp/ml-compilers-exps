@@ -87,7 +87,7 @@ It will create `jax.txt` file containing the error statistics for each dataset a
 For TVM operator, it is similar but it has 2 addtional flags that can be used to select the Experiment ID (`experiment-id`) and Build ID (`build-id`).
 
 ```
-python validate_jax.py --cpu --gpu --file tvm.txt
+python validate_tvm.py --cpu --gpu --file tvm.txt
 ```
 
 ### Running performance experiments
@@ -95,7 +95,7 @@ python validate_jax.py --cpu --gpu --file tvm.txt
 Performance experiments are run within the scope of the experiment, so it will use only the shape set when creating a scope.
 
 ```
-python run_experiment_on_scope.py --cpu --gpu --baseline --tvm 1 --jax --sample 1 --repeat 5 -- max-threads 6
+python run_experiment_on_scope.py --cpu --gpu --baseline --tvm 1 --jax --sample 1 --repeat 5 --max-threads 6
 ```
 
 The CLI command presented above runs the CPU (`--cpu`) and GPU (`--gpu`) operatos, for the baselines (`--baseline`), JAX (`--jax`) and TVM operators from Build 1 of the current scope (`--tvm 1`). It will use the sample 1 from the dataset, repeat the measuments 5 times and set OMP_NUM_THREADS to 6. A different Experiment Id can be selected using the `experiment-id` flag.
