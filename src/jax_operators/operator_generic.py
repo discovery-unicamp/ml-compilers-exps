@@ -49,4 +49,4 @@ class JAXOperator:
         return self._cpu(*args)
 
     def _transform_gpu(self, *args):
-        return self._gpu(*args)
+        return self._gpu(*args).block_until_ready()
