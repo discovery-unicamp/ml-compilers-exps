@@ -31,12 +31,12 @@ operators = {
 
 def header_arch(arch, filepath):
     with open(filepath, "a") as f:
-        f.write(f"{'#'*420}\n#{arch.center(418)}#\n{'#'*420}\n")
+        f.write(f"{'#'*500}\n#{arch.center(498)}#\n{'#'*500}\n")
 
 
 def header_op(op, filepath):
     with open(filepath, "a") as f:
-        f.write(f"{op.center(420, '+')}\n")
+        f.write(f"{op.center(500, '+')}\n")
 
 
 def validate(args):
@@ -90,7 +90,7 @@ def validate(args):
             op = os.path.basename(module).replace("_cpu.so", "")
             if not (op in operators):
                 continue
-            op_tvm = TVMOperator(module)
+            op_tvm = TVMOperator(module, dev)
             op_base = operators[op]()
             header_op(op, args.file)
             result = []
@@ -101,33 +101,38 @@ def validate(args):
                 op_tvm.transform(data_tvm, out_tvm)
                 res_base = op_base._transform_cpu(data)
                 err = np.abs(out_tvm.numpy() - res_base)
-                result.append((err.mean(), err.std(), err.max()))
+                err_rel = np.abs(err / res_base)
+                result.append((err.mean(), err.std(), err.max(), err_rel.max()))
             with open(args.file, "a") as f:
-                result_str = ["|".join(list(map(str, r))).center(75) for r in result]
+                result_str = ["|".join(list(map(str, r))).center(90) for r in result]
                 f.write(
                     f"{dataset_base.center(30)} {dtype.center(9)} {' '.join(result_str)}\n"
                 )
     if args.gpu and obj_files["GPU"] != []:
         import cupy as cp
 
-        dev = tvm.gpu()
+        dev = tvm.cuda()
         header_arch("GPU", args.file)
         for module in obj_files["GPU"]:
-            op = os.path.basename(op).replace("_gpu.so", "")
-            op_tvm = TVMOperator(module)
+            op = os.path.basename(module).replace("_gpu.so", "")
+            if not (op in operators):
+                continue
+            op_tvm = TVMOperator(module, dev)
             op_base = operators[op]()
             header_op(op, args.file)
             result = []
             for dataset in sorted(glob(os.path.join(dataset_base, "*"))):
-                data = cp.load(dataset).astype(dtype)
+                data = np.load(dataset).astype(dtype)
                 data_tvm = tvm.nd.array(data, device=dev)
                 out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
+                data = cp.asarray(data)
                 op_tvm.transform(data_tvm, out_tvm)
-                res_base = op_base._transform_cpu(data)
+                res_base = op_base._transform_gpu(data)
                 err = np.abs(out_tvm.numpy() - res_base.get())
-                result.append((err.mean(), err.std(), err.max()))
+                err_rel = np.abs(err / res_base.get())
+                result.append((err.mean(), err.std(), err.max(), err_rel.max()))
             with open(args.file, "a") as f:
-                result_str = ["|".join(list(map(str, r))).center(75) for r in result]
+                result_str = ["|".join(list(map(str, r))).center(90) for r in result]
                 f.write(
                     f"{dataset_base.center(30)} {dtype.center(9)} {' '.join(result_str)}\n"
                 )

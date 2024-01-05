@@ -5,6 +5,7 @@ from glob import glob
 
 import numpy as np
 import jax
+
 jax.config.update("jax_enable_x64", True)
 
 from pathlib import Path
@@ -18,12 +19,12 @@ operators = {
     "cos-inst-phase": CosineInstantaneousPhase,
     "relative-amplitude-change": RelativeAmplitudeChange,
     "amplitude-acceleration": AmplitudeAcceleration,
-    "inst-frequency": InstantaneousFrequency,
+    # "inst-frequency": InstantaneousFrequency,
     "inst-bandwidth": InstantaneousBandwidth,
-    "dominant-frequency": DominantFrequency,
-    "frequency-change": FrequencyChange,
-    "sweetness": Sweetness,
-    "quality-factor": QualityFactor,
+    # "dominant-frequency": DominantFrequency,
+    # "frequency-change": FrequencyChange,
+    # "sweetness": Sweetness,
+    # "quality-factor": QualityFactor,
     # "response-phase": ResponsePhase,
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
@@ -40,15 +41,16 @@ def get_git_revision_hash():
 
 def header_arch(arch, filepath):
     with open(filepath, "a") as f:
-        f.write(f"{'#'*420}\n#{arch.center(418)}#\n{'#'*420}\n")
+        f.write(f"{'#'*500}\n#{arch.center(498)}#\n{'#'*500}\n")
 
 
 def header_op(op, filepath):
     with open(filepath, "a") as f:
-        f.write(f"{op.center(420, '+')}\n")
+        f.write(f"{op.center(500, '+')}\n")
 
 
 def validate(args):
+    os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = ".25"
     with open(args.file, "w") as f:
         f.write(f"GIT HASH: {get_git_revision_hash()}\n")
     dataset_base = os.path.join("data", args.dataset, "*")
@@ -67,11 +69,14 @@ def validate(args):
                         res_jax = op_jax._transform_cpu(data_jax)
                         res_base = op_base._transform_cpu(data)
                         err = np.abs(res_jax - res_base)
-                        results[dtype].append((err.mean(), err.std(), err.max()))
+                        err_rel = np.abs(err / res_base)
+                        results[dtype].append(
+                            (err.mean(), err.std(), err.max(), err_rel.max())
+                        )
                 with open(args.file, "a") as f:
                     for dtype, result in results.items():
                         result_str = [
-                            "|".join(list(map(str, r))).center(75) for r in result
+                            "|".join(list(map(str, r))).center(90) for r in result
                         ]
                         f.write(
                             f"{sh.center(30)} {dtype.center(9)} {' '.join(result_str)}\n"
@@ -88,16 +93,20 @@ def validate(args):
                 results = {"float32": [], "float64": []}
                 for dataset in sorted(glob(os.path.join(sh, "*"))):
                     for dtype in results.keys():
-                        data = cp.load(dataset).astype(dtype)
+                        data = np.load(dataset).astype(dtype)
                         data_jax = jax.device_put(data, device=jax.devices("gpu")[0])
+                        data = cp.asarray(data)
                         res_jax = op_jax._transform_gpu(data_jax)
                         res_base = op_base._transform_gpu(data)
                         err = cp.abs(res_jax - res_base)
-                        results[dtype].append((err.mean(), err.std(), err.max()))
+                        err_rel = cp.abs(err / res_base)
+                        results[dtype].append(
+                            (err.mean(), err.std(), err.max(), err_rel.max())
+                        )
                 with open(args.file, "a") as f:
                     for dtype, result in results.items():
                         result_str = [
-                            "|".join(list(map(str, r))).center(75) for r in result
+                            "|".join(list(map(str, r))).center(90) for r in result
                         ]
                         f.write(
                             f"{sh.center(30)} {dtype.center(9)} {' '.join(result_str)}\n"
