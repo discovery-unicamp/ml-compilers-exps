@@ -3,6 +3,8 @@
 *.tar.gz
 *.csv
 *.npy
+*.nsys-rep
 Dockerfile*
 *.log
 __pycache__/
+*.txt

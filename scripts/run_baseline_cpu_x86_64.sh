@@ -14,9 +14,7 @@ for env in  default intel_conda amd amd_gcc openblas; do
     echo "Running on ${env}"
     conda deactivate
     conda activate $env
-    for i in $(seq 1 $MAX_THREADS); do
-        export OMP_NUM_THREADS=$i
-        echo "OMP_NUM_THREADS set to ${OMP_NUM_THREADS}"
-        python src/baseline_cpu.py --baseline $env --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE
-    done
+    export OMP_NUM_THREADS=$MAX_THREADS
+    echo "OMP_NUM_THREADS set to ${OMP_NUM_THREADS}"
+    python src/run_baseline.py --baseline $env --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE
 done

@@ -11,4 +11,4 @@ echo "Running GPU baselines"
 eval "$(conda shell.bash hook)"
 conda deactivate
 
-python src/baseline_gpu.py --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE
+python src/run_baseline.py --baseline cupy --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE

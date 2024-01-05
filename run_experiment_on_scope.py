@@ -16,12 +16,15 @@ def run_experiments(args):
             else list(scope.keys())[-1]
         )
         scope = scope[exp_id]
-    run_index = os.path.join(os.getcwd(), "experiments", "results", exp_id, "index.json")
+    run_index = os.path.join(
+        os.getcwd(), "experiments", "results", exp_id, "index.json"
+    )
     run_specs = {
         "CPU": args.cpu and "CPU" in scope,
         "GPU": args.gpu and "GPU" in scope,
         "Baseline": args.baseline,
         "TVM": args.tvm,
+        "JAX": args.jax,
         "repeat": args.repeat,
         "dataset": os.path.join(args.dataset, scope["data_size"], f"{args.sample}.npy"),
         "max_threads": args.max_threads,
@@ -44,42 +47,60 @@ def run_experiments(args):
     with open(csv_file, "w") as f:
         writer = csv.writer(f)
         writer.writerow(
-            ["attr", "env", "threads", *[f"t{i+1}" for i in range(args.repeat)]]
+            [
+                "attr",
+                "env",
+                "threads",
+                *[f"d1t{i+1}" for i in range(args.repeat)],
+                *[f"d2t{i+1}" for i in range(args.repeat)],
+            ]
         )
+    base_path = ""
+    if args.tvm != None:
+        base_path = os.path.join(
+            os.getcwd(), "experiments", "modules", exp_id, f"Build{args.tvm:02d}"
+        )
+
     if run_specs["CPU"]:
-        if run_specs["Baseline"]:
-            process = subprocess.run(
-                [
-                    f"./scripts/run_baselines_cpu_{scope['CPU']['arch']}.sh",
-                    csv_file,
-                    str(run_specs["repeat"]),
-                    os.path.join(os.getcwd(), "data", run_specs["dataset"]),
-                    scope["dtype"],
-                    str(run_specs["max_threads"]),
-                ],
-                capture_output=True,
-            )
-            with open("baseline_cpu_stdout.log", "w") as f:
-                f.write(process.stdout.decode("ascii"))
-            with open("baseline_cpu_stderr.log", "w") as f:
-                f.write(process.stderr.decode("ascii"))
+        for spec in ["Baseline", "TVM", "JAX"]:
+            if run_specs[spec] is not None:
+                process = subprocess.run(
+                    [
+                        f"./scripts/run_{spec.lower()}_cpu_{scope['CPU']['arch']}.sh"
+                        if spec == "Baseline"
+                        else f"./scripts/run_{spec.lower()}_cpu.sh",
+                        csv_file,
+                        str(run_specs["repeat"]),
+                        os.path.join(os.getcwd(), "data", run_specs["dataset"]),
+                        scope["dtype"],
+                        str(run_specs["max_threads"]),
+                        base_path,
+                    ],
+                    capture_output=True,
+                )
+                with open(f"{spec.lower()}_cpu_stdout.log", "w") as f:
+                    f.write(process.stdout.decode("ascii"))
+                with open(f"{spec.lower()}_cpu_stderr.log", "w") as f:
+                    f.write(process.stderr.decode("ascii"))
 
     if run_specs["GPU"]:
-        if run_specs["Baseline"]:
-            process = subprocess.run(
-                [
-                    "./scripts/run_baselines_gpu.sh",
-                    csv_file,
-                    str(run_specs["repeat"]),
-                    os.path.join(os.getcwd(), "data", run_specs["dataset"]),
-                    scope["dtype"],
-                ],
-                capture_output=True,
-            )
-            with open("baseline_gpu_stdout.log", "w") as f:
-                f.write(process.stdout.decode("ascii"))
-            with open("baseline_gpu_stderr.log", "w") as f:
-                f.write(process.stderr.decode("ascii"))
+        for spec in ["Baseline", "TVM", "JAX"]:
+            if run_specs[spec]:
+                process = subprocess.run(
+                    [
+                        f"./scripts/run_{spec.lower()}_gpu.sh",
+                        csv_file,
+                        str(run_specs["repeat"]),
+                        os.path.join(os.getcwd(), "data", run_specs["dataset"]),
+                        scope["dtype"],
+                        base_path,
+                    ],
+                    capture_output=True,
+                )
+                with open(f"{spec.lower()}_gpu_stdout.log", "w") as f:
+                    f.write(process.stdout.decode("ascii"))
+                with open(f"{spec.lower()}_gpu_stderr.log", "w") as f:
+                    f.write(process.stderr.decode("ascii"))
 
 
 if __name__ == "__main__":
@@ -106,7 +127,10 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument("-b", "--baseline", help="Run baselines", action="store_true")
-    parser.add_argument("-t", "--tvm", help="Run TVM operators", action="store_true")
+    parser.add_argument(
+        "-t", "--tvm", help="Run TVM operators, pass build-id", type=int, default=None
+    )
+    parser.add_argument("-j", "--jax", help="Run JAX operators", action="store_true")
 
     parser.add_argument(
         "-d",
@@ -137,7 +161,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-m",
         "--max-threads",
-        help="Max number of threads (OMP_NUM_THREADS) to test, starts at 1 and is incremented until reaching max",
+        help="Max number of threads (OMP_NUM_THREADS) to test, will set OMP_NUM_THREADS",
         type=int,
         default=1,
     )
