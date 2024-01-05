@@ -70,7 +70,7 @@ Stage0 += shell(
         "make install",
         "cd ..",
         "cd python",
-        "python setup.py install --user",
+        "python setup.py install",
         "cd ../..",
         # "rm -r tvm"
     ]

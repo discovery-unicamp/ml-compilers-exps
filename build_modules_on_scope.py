@@ -12,9 +12,9 @@ schedules = {
 }
 
 attr_list = [
-    "fft",
-    "ifft",
-    "hilbert",
+    # "fft",
+    # "ifft",
+    # "hilbert",
     "envelope",
     "inst-phase",
     "cos-inst-phase",
