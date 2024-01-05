@@ -79,7 +79,7 @@ For each build a new folder is created inside the experiment directory, followin
 To validate JAX operators just run
 
 ```
-python validate_jax.py --cpu --gpu --file jax.txt
+python src/validate_jax.py --cpu --gpu --file jax.txt
 ```
 
 It will create `jax.txt` file containing the error statistics for each dataset and flot precision, in a 4-tuple - MEAN_ABS_ERR|STD_ABS_ERR|MAX_ABS_ERR|MAX_ABS_REL_ERR.
@@ -87,7 +87,7 @@ It will create `jax.txt` file containing the error statistics for each dataset a
 For TVM operator, it is similar but it has 2 addtional flags that can be used to select the Experiment ID (`experiment-id`) and Build ID (`build-id`).
 
 ```
-python validate_tvm.py --cpu --gpu --file tvm.txt
+python src/validate_tvm.py --cpu --gpu --file tvm.txt
 ```
 
 ### Running performance experiments

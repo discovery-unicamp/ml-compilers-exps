@@ -7,8 +7,8 @@ from pathlib import Path
 import tvm
 import numpy as np
 
-from src.tvm_te_operators.operator_generic import TVMOperator
-from src.dasf_seismic.attributes.complex_trace import *
+from tvm_te_operators.operator_generic import TVMOperator
+from dasf_seismic.attributes.complex_trace import *
 
 operators = {
     "envelope": Envelope,

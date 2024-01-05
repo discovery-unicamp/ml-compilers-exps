@@ -9,8 +9,8 @@ import jax
 jax.config.update("jax_enable_x64", True)
 
 from pathlib import Path
-from src.jax_operators.operator_generic import JAXOperator
-from src.dasf_seismic.attributes.complex_trace import *
+from jax_operators.operator_generic import JAXOperator
+from dasf_seismic.attributes.complex_trace import *
 
 
 operators = {
