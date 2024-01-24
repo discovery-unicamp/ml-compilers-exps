@@ -5,7 +5,7 @@
 First install DVC and HPCCM via pip, utilities that will be required to setup the current environment:
 
 ```
-pip install "dvc[s3]" hpccm
+pip install "dvc[s3]==3.42.0" hpccm
 ```
 
 ## Acessing and updating DVC storage
