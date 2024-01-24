@@ -1,0 +1,6 @@
+outs:
+- md5: 75d7481d8d4e81415ea8a613bf8671ff.dir
+  size: 299189125
+  nfiles: 388
+  hash: md5
+  path: modules
