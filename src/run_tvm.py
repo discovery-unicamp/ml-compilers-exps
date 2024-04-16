@@ -98,7 +98,6 @@ def run_attr_op(args, name):
         elif "convolve" in name or "correlate" in name:
             weight = weights[name[-2:]]
             weight_tvm = tvm.nd.array(weight, device=dev)
-            print(weight_tvm.dtype)
             execution_times = timeit.repeat(
                 "op.transform(data_tvm, weight_tvm, out_tvm)",
                 repeat=args.repeat,

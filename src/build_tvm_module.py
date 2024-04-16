@@ -67,6 +67,7 @@ operators = {
 
 @auto_scheduler.register_workload
 def search_operator(x, y, z, dtype, operator):
+    print(x, y, z)
     X = te.placeholder((x, y, z), name="X", dtype=dtype)
     if operator == "ifft":
         Y = te.placeholder((x, y, z), name="Y", dtype=dtype)
@@ -102,6 +103,13 @@ def build_module(args):
     )
     start = perf_counter()
     name = f"{args.operator}_{args.arch}"
+    x, y, z = args.x, args.y, args.z
+    if "correlate" in args.operator or "convolve" in args.operator:
+        if args.operator[-2:] == "1d":
+            args.x = 1
+            args.y = 1
+        elif args.operator[-2] == "2d":
+            args.x = 1
     if build_profile["sch"] == 0:  # Default
         computation_context = {
             "x": args.x if args.x else te.var("x"),
@@ -141,6 +149,11 @@ def build_module(args):
             tgt,
             name=name,
         )
+        print(tvm.lower(schedule, 
+            [
+                *operator.computation_context["input"],
+                *operator.computation_context["result"],
+            ], simple_mode=True))
     elif build_profile["sch"] == 1:  # Ansor
         task = tvm.auto_scheduler.SearchTask(
             func=search_operator,

@@ -11,7 +11,7 @@ class Convolution1D:
     def _set_computation_context(self, computation_context):
         x = 1
         y = 1
-        z = computation_context.get("x", 256)
+        z = computation_context.get("z", 256)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
         w = computation_context.get("w", 3)
         W = computation_context.get("W", te.placeholder((1, 1, w), dtype=X.dtype, name=get_name("W")))
@@ -49,7 +49,7 @@ class Convolution1D:
         res = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                Xpad[i, j, k + rz] * W[1, 1, w-rz], axis=[rz]
+                Xpad[i, j, k + rz] * W[0, 0, w-rz], axis=[rz]
             ),
             name=get_name("conv1d"),
         )
@@ -104,7 +104,7 @@ class Convolution2D:
         res = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                Xpad[i, j + ry, k + rz] * W[i, w1-ry, w2-rz], axis=[ry, rz]
+                Xpad[i, j + ry, k + rz] * W[0, w1-ry, w2-rz], axis=[ry, rz]
             ),
             name=get_name("conv2d"),
         )
@@ -116,9 +116,9 @@ class Convolution3D:
         self._set_computation_context(computation_context)
 
     def _set_computation_context(self, computation_context):
-        x = computation_context.get("x1", 64)
-        y = computation_context.get("x2", 64)
-        z = computation_context.get("x3", 256)
+        x = computation_context.get("x", 64)
+        y = computation_context.get("y", 64)
+        z = computation_context.get("z", 256)
         X = computation_context.get("X", te.placeholder((x, y,z), name=get_name("X")))
         w1 = computation_context.get("w1", 3)
         w2 = computation_context.get("w2", 3)
@@ -175,7 +175,7 @@ class Correlation1D:
     def _set_computation_context(self, computation_context):
         x = 1
         y = 1
-        z = computation_context.get("x", 256)
+        z = computation_context.get("z", 256)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
         w = computation_context.get("w", 3)
         W = computation_context.get("W", te.placeholder((1, 1, w), dtype=X.dtype, name=get_name("W")))
@@ -213,7 +213,7 @@ class Correlation1D:
         res = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                Xpad[i, j, k + rz] * W[1, 1, rz], axis=[rz]
+                Xpad[i, j, k + rz] * W[0, 0, rz], axis=[rz]
             ),
             name=get_name("cor1d"),
         )
@@ -268,7 +268,7 @@ class Correlation2D:
         res = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                Xpad[i, j + ry, k + rz] * W[i, ry, rz], axis=[ry, rz]
+                Xpad[i, j + ry, k + rz] * W[0, ry, rz], axis=[ry, rz]
             ),
             name=get_name("cor2d"),
         )
@@ -280,9 +280,9 @@ class Correlation3D:
         self._set_computation_context(computation_context)
 
     def _set_computation_context(self, computation_context):
-        x = computation_context.get("x1", 64)
-        y = computation_context.get("x2", 64)
-        z = computation_context.get("x3", 256)
+        x = computation_context.get("x", 64)
+        y = computation_context.get("y", 64)
+        z = computation_context.get("z", 256)
         X = computation_context.get("X", te.placeholder((x, y,z), name=get_name("X")))
         w1 = computation_context.get("w1", 3)
         w2 = computation_context.get("w2", 3)
