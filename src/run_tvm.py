@@ -6,6 +6,7 @@ import traceback
 import multiprocessing
 from multiprocessing import Process
 from pathlib import Path
+from copy import deepcopy
 
 import numpy as np
 from tvm_te_operators.operator_generic import TVMOperator
@@ -29,8 +30,48 @@ attrs = [
     # "response-frequency",
     # "response-amplitude",
     # "apparent-polarity",
+    "convolve1d",
+    "correlate1d",
+    "convolve2d",
+    "correlate2d",
+    "convolve3d",
+    "correlate3d"
 ]
 
+weights = {
+    "1d": np.array([-0.5, 0, 0.5]).reshape(1, 1, 3),
+    "2d": np.array([
+        [-1, -1, -1],
+        [-1, 8, -1],
+        [-1, -1 , -1]
+    ]).reshape(1, 3, 3),
+    "3d": np.array([
+        [
+            [-1, -1, -1],
+            [-1, -1, -1],
+            [-1, -1 , -1]
+        ],
+        [
+            [-1, -1, -1],
+            [-1, 8, -1],
+            [-1, -1 , -1]
+        ],
+        [
+            [-1, -1, -1],
+            [-1, -1, -1],
+            [-1, -1 , -1]
+        ],
+    ]),
+
+}
+def extract(data, name):
+    if "1d" in name:
+        il, xl, t = data.shape
+        data = deepcopy(data[il//2, xl//2,:].reshape(1, 1, t))
+    elif "2d" in name:
+        il, xl, t = data.shape
+        data = deepcopy(data[il//2, :,:].reshape(1, xl, t))
+    return data
 
 def run_attr_op(args, name):
     dev = tvm.cuda() if args.arch == "gpu" else tvm.cpu()
@@ -41,6 +82,7 @@ def run_attr_op(args, name):
         return
     try:
         data = np.load(args.dataset).astype(args.dtype)
+        data = extract(data, name)
         data_tvm = tvm.nd.array(data, device=dev)
         out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
         op = TVMOperator(module, dev)
@@ -53,6 +95,17 @@ def run_attr_op(args, name):
                 globals=locals(),
             )
             del out_tvm_2
+        elif "convolve" in name or "correlate" in name:
+            weight = weights[name[-2:]]
+            weight_tvm = tvm.nd.array(weight, device=dev)
+            print(weight_tvm.dtype)
+            execution_times = timeit.repeat(
+                "op.transform(data_tvm, weight_tvm, out_tvm)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
+            del weight_tvm 
         else:
             execution_times = timeit.repeat(
                 "op.transform(data_tvm, out_tvm)",
@@ -62,6 +115,7 @@ def run_attr_op(args, name):
             )
         del data, out_tvm
         data_2 = np.load(second_dataset).astype(args.dtype)
+        data_2 = extract(data_2, name)
         data_2_tvm = tvm.nd.array(data_2, device=dev)
         out_2_tvm = tvm.nd.empty(data_2_tvm.shape, dtype=data_2_tvm.dtype, device=dev)
         if name in ["hilbert"]:
@@ -72,6 +126,16 @@ def run_attr_op(args, name):
                 number=1,
                 globals=locals(),
             )
+        elif "convolve" in name or "correlate" in name:
+            weight = weights[name[-2:]]
+            weight_tvm = tvm.nd.array(weight, device=dev)
+            execution_times = timeit.repeat(
+                "op.transform(data_2_tvm, weight_tvm, out_2_tvm)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
+            del weight_tvm
         else:
             execution_times_2 = timeit.repeat(
                 "op.transform(data_2_tvm, out_2_tvm)",

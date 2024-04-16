@@ -6,6 +6,7 @@ import traceback
 from pathlib import Path
 import multiprocessing
 from multiprocessing import Process
+from copy import deepcopy
 
 import numpy as np
 
@@ -33,25 +34,44 @@ from dasf_seismic.attributes.complex_trace import (
     ApparentPolarity,
 )
 
+from baseline.signal import (
+    Convolve1D,
+    Convolve2D,
+    Correlate1D,
+    Correlate2D,
+)
+
 attrs = {
-    "hilbert": Hilbert,
-    "envelope": Envelope,
-    "inst-phase": InstantaneousPhase,
-    "cos-inst-phase": CosineInstantaneousPhase,
-    "relative-amplitude-change": RelativeAmplitudeChange,
-    "amplitude-acceleration": AmplitudeAcceleration,
-    "inst-frequency": InstantaneousFrequency,
-    "inst-bandwidth": InstantaneousBandwidth,
-    "dominant-frequency": DominantFrequency,
-    "frequency-change": FrequencyChange,
-    "sweetness": Sweetness,
-    "quality-factor": QualityFactor,
+    # "hilbert": Hilbert,
+    # "envelope": Envelope,
+    # "inst-phase": InstantaneousPhase,
+    # "cos-inst-phase": CosineInstantaneousPhase,
+    # "relative-amplitude-change": RelativeAmplitudeChange,
+    # "amplitude-acceleration": AmplitudeAcceleration,
+    # "inst-frequency": InstantaneousFrequency,
+    # "inst-bandwidth": InstantaneousBandwidth,
+    # "dominant-frequency": DominantFrequency,
+    # "frequency-change": FrequencyChange,
+    # "sweetness": Sweetness,
+    # "quality-factor": QualityFactor,
     # "response-phase": ResponsePhase,
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
+    "convolve1d_direct": Convolve1D,
+    "correlate1d_direct": Correlate1D,
+    "convolve2d": Convolve2D,
+    "correlate2d": Correlate2D,
 }
 
+def extract(data, name):
+    if "1d" in name:
+        il, xl, _ = data.shape
+        data = deepcopy(data[il//2, xl//2,:])
+    elif "2d" in name:
+        il, _, _ = data.shape
+        data = deepcopy(data[il//2, :,:])
+    return data
 
 def run_attr_op(args, name):
     arch = "gpu" if args.baseline == "cupy" else "cpu"
@@ -64,6 +84,7 @@ def run_attr_op(args, name):
             else cp.load(args.dataset).astype(args.dtype)
         )
         op = attrs[name]()
+        data = extract(data, name)
         execution_times = timeit.repeat(
             f"op._transform_{arch}(data)",
             repeat=args.repeat,
@@ -76,6 +97,7 @@ def run_attr_op(args, name):
             if arch == "cpu"
             else cp.load(second_dataset).astype(args.dtype)
         )
+        data_2 = extract(data_2, name)
         execution_times_2 = timeit.repeat(
             f"op._transform_{arch}(data_2)",
             repeat=args.repeat,

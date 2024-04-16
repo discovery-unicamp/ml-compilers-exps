@@ -19,6 +19,17 @@ from .complex_trace import (
     apparent_polarity,
 )
 
+from .signal import (
+    convolve1d_fft,
+    convolve1d_direct,
+    correlate1d_fft,
+    correlate1d_direct,
+    convolve2d_fft,
+    convolve2d_direct,
+    correlate2d_fft,
+    correlate2d_direct
+)
+
 operators = {
     "hilbert": hilbert,
     "envelope": envelope,
@@ -36,6 +47,14 @@ operators = {
     "response-frequency": response_frequency,
     "response-amplitude": response_amplitude,
     "apparent-polarity": apparent_polarity,
+    "convolve1d_fft": convolve1d_fft,
+    "convolve1d_direct": convolve1d_direct,
+    "correlate1d_fft": correlate1d_fft,
+    "correlate1d_direct": correlate1d_direct,
+    "convolve2d_fft": convolve2d_fft,
+    "convolve2d_direct": convolve2d_direct,
+    "correlate2d_fft": correlate2d_fft,
+    "correlate2d_direct": correlate2d_direct
 }
 
 

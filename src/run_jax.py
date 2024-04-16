@@ -6,6 +6,7 @@ import traceback
 import multiprocessing
 from multiprocessing import Process
 from pathlib import Path
+from copy import deepcopy
 
 import numpy as np
 import jax
@@ -15,30 +16,43 @@ jax.config.update("jax_enable_x64", True)
 from jax_operators.operator_generic import JAXOperator
 
 attrs = [
-    "hilbert",
-    "envelope",
-    "inst-phase",
-    "cos-inst-phase",
-    "relative-amplitude-change",
-    "amplitude-acceleration",
-    "inst-frequency",
-    "inst-bandwidth",
-    "dominant-frequency",
-    "frequency-change",
-    "sweetness",
-    "quality-factor",
+    # "hilbert",
+    # "envelope",
+    # "inst-phase",
+    # "cos-inst-phase",
+    # "relative-amplitude-change",
+    # "amplitude-acceleration",
+    # "inst-frequency",
+    # "inst-bandwidth",
+    # "dominant-frequency",
+    # "frequency-change",
+    # "sweetness",
+    # "quality-factor",
     # "response-phase",
     # "response-frequency",
     # "response-amplitude",
     # "apparent-polarity",
+    "convolve1d_direct",
+    "correlate1d_direct",
+    "convolve2d_direct",
+    "correlate2d_direct"
 ]
 
+def extract(data, name):
+    if "1d" in name:
+        il, xl, _ = data.shape
+        data = deepcopy(data[il//2, xl//2,:])
+    elif "2d" in name:
+        il, _, _ = data.shape
+        data = deepcopy(data[il//2, :,:])
+    return data
 
 def run_attr_op(args, name):
     data_id = int(os.path.basename(args.dataset).split(".")[0])
     second_dataset = os.path.join(os.path.dirname(args.dataset), f"{data_id%5 + 1}.npy")
     try:
         data = np.load(args.dataset).astype(args.dtype)
+        data = extract(data, name)
         data = jax.device_put(data, device=jax.devices(args.arch)[0])
         op = JAXOperator(name)
         execution_times = timeit.repeat(
@@ -49,6 +63,7 @@ def run_attr_op(args, name):
         )
         del data
         data_2 = np.load(second_dataset).astype(args.dtype)
+        data_2 = extract(data_2, name)
         data_2 = jax.device_put(data_2, device=jax.devices(args.arch)[0])
         execution_times_2 = timeit.repeat(
             f"op._transform_{args.arch}(data_2)",

@@ -28,6 +28,15 @@ from tvm_te_operators.complex_trace import (
     # ApparentPolarity,
 )
 
+from tvm_te_operators.signal.convolution import (
+    Convolution1D,
+    Correlation1D,
+    Convolution2D,
+    Correlation2D,
+    Convolution3D,
+    Correlation3D
+)
+
 operators = {
     "fft": FFT,
     "ifft": IFFT,
@@ -47,6 +56,12 @@ operators = {
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
+    "convolve1d": Convolution1D,
+    "correlate1d": Correlation1D,
+    "convolve2d": Convolution2D,
+    "correlate2d": Correlation2D,
+    "convolve3d": Convolution3D,
+    "correlate3d": Correlation3D
 }
 
 
