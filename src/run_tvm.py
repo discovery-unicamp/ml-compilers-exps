@@ -6,26 +6,27 @@ import traceback
 import multiprocessing
 from multiprocessing import Process
 from pathlib import Path
-from copy import deepcopy
 
 import numpy as np
 from tvm_te_operators.operator_generic import TVMOperator
 
 import tvm
 
+from utils import extract_data_tvm, weights_tvm
+
 attrs = [
-    "hilbert",
-    "envelope",
-    "inst-phase",
-    "cos-inst-phase",
-    "relative-amplitude-change",
-    "amplitude-acceleration",
-    "inst-frequency",
-    "inst-bandwidth",
-    "dominant-frequency",
-    "frequency-change",
-    "sweetness",
-    "quality-factor",
+    # "hilbert",
+    # "envelope",
+    # "inst-phase",
+    # "cos-inst-phase",
+    # "relative-amplitude-change",
+    # "amplitude-acceleration",
+    # "inst-frequency",
+    # "inst-bandwidth",
+    # "dominant-frequency",
+    # "frequency-change",
+    # "sweetness",
+    # "quality-factor",
     # "response-phase",
     # "response-frequency",
     # "response-amplitude",
@@ -35,43 +36,19 @@ attrs = [
     "convolve2d",
     "correlate2d",
     "convolve3d",
-    "correlate3d"
+    "correlate3d",
+    # "glcm-asm",
+    # "glcm-contrast",
+    # "glcm-correlation",
+    # "glcm-variance",
+    # "glcm-energy",
+    # "glcm-entropy",
+    # "glcm-mean",
+    # "glcm-std",
+    # "glcm-dissimilarity",
+    # "glcm-homogeneity"
 ]
 
-weights = {
-    "1d": np.array([-0.5, 0, 0.5]).reshape(1, 1, 3),
-    "2d": np.array([
-        [-1, -1, -1],
-        [-1, 8, -1],
-        [-1, -1 , -1]
-    ]).reshape(1, 3, 3),
-    "3d": np.array([
-        [
-            [-1, -1, -1],
-            [-1, -1, -1],
-            [-1, -1 , -1]
-        ],
-        [
-            [-1, -1, -1],
-            [-1, 8, -1],
-            [-1, -1 , -1]
-        ],
-        [
-            [-1, -1, -1],
-            [-1, -1, -1],
-            [-1, -1 , -1]
-        ],
-    ]),
-
-}
-def extract(data, name):
-    if "1d" in name:
-        il, xl, t = data.shape
-        data = deepcopy(data[il//2, xl//2,:].reshape(1, 1, t))
-    elif "2d" in name:
-        il, xl, t = data.shape
-        data = deepcopy(data[il//2, :,:].reshape(1, xl, t))
-    return data
 
 def run_attr_op(args, name):
     dev = tvm.cuda() if args.arch == "gpu" else tvm.cpu()
@@ -82,7 +59,7 @@ def run_attr_op(args, name):
         return
     try:
         data = np.load(args.dataset).astype(args.dtype)
-        data = extract(data, name)
+        data = extract_data_tvm(data, name)
         data_tvm = tvm.nd.array(data, device=dev)
         out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
         op = TVMOperator(module, dev)
@@ -96,7 +73,7 @@ def run_attr_op(args, name):
             )
             del out_tvm_2
         elif "convolve" in name or "correlate" in name:
-            weight = weights[name[-2:]]
+            weight = weights_tvm[name[-2:]].astype(args.dtype)
             weight_tvm = tvm.nd.array(weight, device=dev)
             execution_times = timeit.repeat(
                 "op.transform(data_tvm, weight_tvm, out_tvm)",
@@ -104,7 +81,7 @@ def run_attr_op(args, name):
                 number=1,
                 globals=locals(),
             )
-            del weight_tvm 
+            del weight_tvm
         else:
             execution_times = timeit.repeat(
                 "op.transform(data_tvm, out_tvm)",
@@ -114,7 +91,7 @@ def run_attr_op(args, name):
             )
         del data, out_tvm
         data_2 = np.load(second_dataset).astype(args.dtype)
-        data_2 = extract(data_2, name)
+        data_2 = extract_data_tvm(data_2, name)
         data_2_tvm = tvm.nd.array(data_2, device=dev)
         out_2_tvm = tvm.nd.empty(data_2_tvm.shape, dtype=data_2_tvm.dtype, device=dev)
         if name in ["hilbert"]:
@@ -126,9 +103,9 @@ def run_attr_op(args, name):
                 globals=locals(),
             )
         elif "convolve" in name or "correlate" in name:
-            weight = weights[name[-2:]]
+            weight = weights_tvm[name[-2:]].astype(args.dtype)
             weight_tvm = tvm.nd.array(weight, device=dev)
-            execution_times = timeit.repeat(
+            execution_times_2 = timeit.repeat(
                 "op.transform(data_2_tvm, weight_tvm, out_2_tvm)",
                 repeat=args.repeat,
                 number=1,

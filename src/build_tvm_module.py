@@ -28,13 +28,28 @@ from tvm_te_operators.complex_trace import (
     # ApparentPolarity,
 )
 
+
+from tvm_te_operators.texture.glcm import (
+    GLCMBase,
+    GLCMASM,
+    GLCMContrast,
+    GLCMCorrelation,
+    GLCMVariance,
+    GLCMEnergy,
+    GLCMEntropy,
+    GLCMMean,
+    GLCMStandardDeviation,
+    GLCMDissimilarity,
+    GLCMHomogeneity,
+)
+
 from tvm_te_operators.signal.convolution import (
     Convolution1D,
     Correlation1D,
     Convolution2D,
     Correlation2D,
     Convolution3D,
-    Correlation3D
+    Correlation3D,
 )
 
 operators = {
@@ -61,13 +76,23 @@ operators = {
     "convolve2d": Convolution2D,
     "correlate2d": Correlation2D,
     "convolve3d": Convolution3D,
-    "correlate3d": Correlation3D
+    "correlate3d": Correlation3D,
+    "glcm-base": GLCMBase,
+    "glcm-asm": GLCMASM,
+    "glcm-contrast": GLCMContrast,
+    "glcm-correlation": GLCMCorrelation,
+    "glcm-variance": GLCMVariance,
+    "glcm-energy": GLCMEnergy,
+    "glcm-entropy": GLCMEntropy,
+    "glcm-mean": GLCMMean,
+    "glcm-std": GLCMStandardDeviation,
+    "glcm-dissimilarity": GLCMDissimilarity,
+    "glcm-homogeneity": GLCMHomogeneity,
 }
 
 
 @auto_scheduler.register_workload
 def search_operator(x, y, z, dtype, operator):
-    print(x, y, z)
     X = te.placeholder((x, y, z), name="X", dtype=dtype)
     if operator == "ifft":
         Y = te.placeholder((x, y, z), name="Y", dtype=dtype)
@@ -108,7 +133,7 @@ def build_module(args):
         if args.operator[-2:] == "1d":
             args.x = 1
             args.y = 1
-        elif args.operator[-2] == "2d":
+        elif args.operator[-2:] == "2d":
             args.x = 1
     if build_profile["sch"] == 0:  # Default
         computation_context = {
@@ -140,6 +165,16 @@ def build_module(args):
         schedule = te.create_schedule(
             [res.op for res in operator.computation_context["result"]]
         )
+        print(
+            tvm.lower(
+                schedule,
+                [
+                    *operator.computation_context["input"],
+                    *operator.computation_context["result"],
+                ],
+                simple_mode=True,
+            )
+        )
         build = tvm.build(
             schedule,
             [
@@ -149,11 +184,6 @@ def build_module(args):
             tgt,
             name=name,
         )
-        print(tvm.lower(schedule, 
-            [
-                *operator.computation_context["input"],
-                *operator.computation_context["result"],
-            ], simple_mode=True))
     elif build_profile["sch"] == 1:  # Ansor
         task = tvm.auto_scheduler.SearchTask(
             func=search_operator,

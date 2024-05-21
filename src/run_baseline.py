@@ -6,7 +6,6 @@ import traceback
 from pathlib import Path
 import multiprocessing
 from multiprocessing import Process
-from copy import deepcopy
 
 import numpy as np
 
@@ -34,12 +33,29 @@ from dasf_seismic.attributes.complex_trace import (
     ApparentPolarity,
 )
 
+from dasf_seismic.attributes.texture import (
+    GLCMASM,
+    GLCMContrast,
+    GLCMCorrelation,
+    GLCMDissimilarity,
+    GLCMEnergy,
+    GLCMEntropy,
+    GLCMHomogeneity,
+    GLCMMean,
+    GLCMStandardDeviation,
+    GLCMVariance,
+)
+
 from baseline.signal import (
     Convolve1D,
     Convolve2D,
+    Convolve3D,
     Correlate1D,
     Correlate2D,
+    Correlate3D,
 )
+
+from utils import extract_data, weights
 
 attrs = {
     # "hilbert": Hilbert,
@@ -58,20 +74,24 @@ attrs = {
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
-    "convolve1d_direct": Convolve1D,
-    "correlate1d_direct": Correlate1D,
+    "convolve1d": Convolve1D,
+    "correlate1d": Correlate1D,
     "convolve2d": Convolve2D,
     "correlate2d": Correlate2D,
+    "convolve3d": Convolve3D,
+    "correlate3d": Correlate3D,
+    # "glcm-asm": GLCMASM,
+    # "glcm-contrast": GLCMContrast,
+    # "glcm-correlation": GLCMCorrelation,
+    # "glcm-variance": GLCMVariance,
+    # "glcm-energy": GLCMEnergy,
+    # "glcm-entropy": GLCMEntropy,
+    # "glcm-mean": GLCMMean,
+    # "glcm-std": GLCMStandardDeviation,
+    # "glcm-dissimilarity": GLCMDissimilarity,
+    # "glcm-homogeneity": GLCMHomogeneity
 }
 
-def extract(data, name):
-    if "1d" in name:
-        il, xl, _ = data.shape
-        data = deepcopy(data[il//2, xl//2,:])
-    elif "2d" in name:
-        il, _, _ = data.shape
-        data = deepcopy(data[il//2, :,:])
-    return data
 
 def run_attr_op(args, name):
     arch = "gpu" if args.baseline == "cupy" else "cpu"
@@ -84,26 +104,47 @@ def run_attr_op(args, name):
             else cp.load(args.dataset).astype(args.dtype)
         )
         op = attrs[name]()
-        data = extract(data, name)
-        execution_times = timeit.repeat(
-            f"op._transform_{arch}(data)",
-            repeat=args.repeat,
-            number=1,
-            globals=locals(),
-        )
+        data = extract_data(data, name)
+        if "correlate" in name or "convolve" in name:
+            weight = weights[name[-2:]].astype(args.dtype)
+            weight = weight if arch == "cpu" else cp.asarray(weight)
+            execution_times = timeit.repeat(
+                f"op._transform_{arch}(data, weight)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
+            del weight
+        else:
+            execution_times = timeit.repeat(
+                f"op._transform_{arch}(data)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
         del data
         data_2 = (
             np.load(second_dataset).astype(args.dtype)
             if arch == "cpu"
             else cp.load(second_dataset).astype(args.dtype)
         )
-        data_2 = extract(data_2, name)
-        execution_times_2 = timeit.repeat(
-            f"op._transform_{arch}(data_2)",
-            repeat=args.repeat,
-            number=1,
-            globals=locals(),
-        )
+        data_2 = extract_data(data_2, name)
+        if "correlate" in name or "convolve" in name:
+            weight_2 = weights[name[-2:]].astype(args.dtype)
+            weight_2 = weight_2 if arch == "cpu" else cp.asarray(weight_2)
+            execution_times_2 = timeit.repeat(
+                f"op._transform_{arch}(data_2, weight_2)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
+        else:
+            execution_times_2 = timeit.repeat(
+                f"op._transform_{arch}(data_2)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
     except Exception as e:
         print(traceback(e))
         execution_times = [-1] * args.repeat

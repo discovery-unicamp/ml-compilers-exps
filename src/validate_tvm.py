@@ -9,23 +9,49 @@ import numpy as np
 
 from tvm_te_operators.operator_generic import TVMOperator
 from dasf_seismic.attributes.complex_trace import *
+from dasf_seismic.attributes.texture import *
+from baseline.signal import (
+    Convolve1D,
+    Convolve2D,
+    Convolve3D,
+    Correlate1D,
+    Correlate2D,
+    Correlate3D,
+)
+from utils import extract_data, extract_data_tvm, weights, weights_tvm
 
 operators = {
-    "envelope": Envelope,
-    "inst-phase": InstantaneousPhase,
-    "cos-inst-phase": CosineInstantaneousPhase,
-    "relative-amplitude-change": RelativeAmplitudeChange,
-    "amplitude-acceleration": AmplitudeAcceleration,
-    "inst-frequency": InstantaneousFrequency,
-    "inst-bandwidth": InstantaneousBandwidth,
-    "dominant-frequency": DominantFrequency,
-    "frequency-change": FrequencyChange,
-    "sweetness": Sweetness,
-    "quality-factor": QualityFactor,
+    # "envelope": Envelope,
+    # "inst-phase": InstantaneousPhase,
+    # "cos-inst-phase": CosineInstantaneousPhase,
+    # "relative-amplitude-change": RelativeAmplitudeChange,
+    # "amplitude-acceleration": AmplitudeAcceleration,
+    # "inst-frequency": InstantaneousFrequency,
+    # "inst-bandwidth": InstantaneousBandwidth,
+    # "dominant-frequency": DominantFrequency,
+    # "frequency-change": FrequencyChange,
+    # "sweetness": Sweetness,
+    # "quality-factor": QualityFactor,
     # "response-phase": ResponsePhase,
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
+    "convolve1d": Convolve1D,
+    "correlate1d": Correlate1D,
+    "convolve2d": Convolve2D,
+    "correlate2d": Correlate2D,
+    "convolve3d": Convolve3D,
+    "correlate3d": Correlate3D,
+    # "glcm-asm": GLCMASM,
+    # "glcm-contrast": GLCMContrast,
+    # "glcm-correlation": GLCMCorrelation,
+    # "glcm-variance": GLCMVariance,
+    # "glcm-energy": GLCMEnergy,
+    # "glcm-entropy": GLCMEntropy,
+    # "glcm-mean": GLCMMean,
+    # "glcm-std": GLCMStandardDeviation,
+    # "glcm-dissimilarity": GLCMDissimilarity,
+    # "glcm-homogeneity": GLCMHomogeneity
 }
 
 
@@ -96,10 +122,27 @@ def validate(args):
             result = []
             for dataset in sorted(glob(os.path.join(dataset_base, "*"))):
                 data = np.load(dataset).astype(dtype)
-                data_tvm = tvm.nd.array(data, device=dev)
-                out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
-                op_tvm.transform(data_tvm, out_tvm)
-                res_base = op_base._transform_cpu(data)
+                if "convolve" in op or "correlate" in op:
+                    data_tvm = extract_data_tvm(data, op)
+                    data = extract_data(data, op)
+                    weight_tvm = weights_tvm[op[-2:]].astype(dtype)
+                    weight = weights[op[-2:]].astype(dtype)
+                    data_tvm = tvm.nd.array(data_tvm, device=dev)
+                    weight_tvm = tvm.nd.array(weight_tvm, device=dev)
+                    out_tvm = tvm.nd.empty(
+                        data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                    )
+                    op_tvm.transform(data_tvm, weight_tvm, out_tvm)
+                    res_base = op_base._transform_cpu(data, weight)
+                else:
+                    data_tvm = tvm.nd.array(data, device=dev)
+                    out_tvm = tvm.nd.empty(
+                        data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                    )
+                    op_tvm.transform(data_tvm, out_tvm)
+                    res_base = op_base._transform_cpu(data)
+                np.save("tvm_c.npy", out_tvm.numpy())
+                np.save("cpu.npy", res_base)
                 err = np.abs(out_tvm.numpy() - res_base)
                 err_rel = np.abs(err / res_base)
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))
@@ -123,11 +166,30 @@ def validate(args):
             result = []
             for dataset in sorted(glob(os.path.join(dataset_base, "*"))):
                 data = np.load(dataset).astype(dtype)
-                data_tvm = tvm.nd.array(data, device=dev)
-                out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
-                data = cp.asarray(data)
-                op_tvm.transform(data_tvm, out_tvm)
-                res_base = op_base._transform_gpu(data)
+                if "convolve" in op or "correlate" in op:
+                    data_tvm = extract_data_tvm(data, op)
+                    data = extract_data(data, op)
+                    weight_tvm = weights_tvm[op[-2:]].astype(dtype)
+                    weight = weights[op[-2:]].astype(dtype)
+                    data_tvm = tvm.nd.array(data_tvm, device=dev)
+                    weight_tvm = tvm.nd.array(weight_tvm, device=dev)
+                    data = cp.asarray(data)
+                    weight = cp.asarray(weight)
+                    out_tvm = tvm.nd.empty(
+                        data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                    )
+                    op_tvm.transform(data_tvm, weight_tvm, out_tvm)
+                    res_base = op_base._transform_gpu(data, weight)
+                else:
+                    data_tvm = tvm.nd.array(data, device=dev)
+                    out_tvm = tvm.nd.empty(
+                        data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                    )
+                    data = cp.asarray(data)
+                    op_tvm.transform(data_tvm, out_tvm)
+                    res_base = op_base._transform_gpu(data)
+                np.save("tvm_g.npy", out_tvm.numpy())
+                np.save("gpu.npy", res_base.get())
                 err = np.abs(out_tvm.numpy() - res_base.get())
                 err_rel = np.abs(err / res_base.get())
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))

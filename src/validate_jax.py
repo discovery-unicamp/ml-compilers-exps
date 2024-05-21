@@ -11,16 +11,24 @@ jax.config.update("jax_enable_x64", True)
 from pathlib import Path
 from jax_operators.operator_generic import JAXOperator
 from dasf_seismic.attributes.complex_trace import *
-
+from baseline.signal import (
+    Convolve1D,
+    Convolve2D,
+    Convolve3D,
+    Correlate1D,
+    Correlate2D,
+    Correlate3D,
+)
+from utils import extract_data, weights
 
 operators = {
-    "envelope": Envelope,
-    "inst-phase": InstantaneousPhase,
-    "cos-inst-phase": CosineInstantaneousPhase,
-    "relative-amplitude-change": RelativeAmplitudeChange,
-    "amplitude-acceleration": AmplitudeAcceleration,
-    # "inst-frequency": InstantaneousFrequency,
-    "inst-bandwidth": InstantaneousBandwidth,
+    # "envelope": Envelope,
+    # "inst-phase": InstantaneousPhase,
+    # "cos-inst-phase": CosineInstantaneousPhase,
+    # "relative-amplitude-change": RelativeAmplitudeChange,
+    # "amplitude-acceleration": AmplitudeAcceleration,
+    # # "inst-frequency": InstantaneousFrequency,
+    # "inst-bandwidth": InstantaneousBandwidth,
     # "dominant-frequency": DominantFrequency,
     # "frequency-change": FrequencyChange,
     # "sweetness": Sweetness,
@@ -29,6 +37,12 @@ operators = {
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
+    "convolve1d": Convolve1D,
+    "correlate1d": Correlate1D,
+    "convolve2d": Convolve2D,
+    "correlate2d": Correlate2D,
+    "convolve3d": Convolve3D,
+    "correlate3d": Correlate3D,
 }
 
 
@@ -65,9 +79,23 @@ def validate(args):
                 for dataset in sorted(glob(os.path.join(sh, "*"))):
                     for dtype in results.keys():
                         data = np.load(dataset).astype(dtype)
-                        data_jax = jax.device_put(data, device=jax.devices("cpu")[0])
-                        res_jax = op_jax._transform_cpu(data_jax)
-                        res_base = op_base._transform_cpu(data)
+                        if "convolve" in op or "correlate" in op:
+                            data = extract_data(data, op)
+                            weight = weights[op[-2:]].astype(dtype)
+                            data_jax = jax.device_put(
+                                data, device=jax.devices("cpu")[0]
+                            )
+                            weight_jax = jax.device_put(
+                                weight, device=jax.devices("cpu")[0]
+                            )
+                            res_jax = op_jax._transform_cpu(data_jax, weight_jax)
+                            res_base = op_base._transform_cpu(data, weight)
+                        else:
+                            data_jax = jax.device_put(
+                                data, device=jax.devices("cpu")[0]
+                            )
+                            res_jax = op_jax._transform_cpu(data_jax)
+                            res_base = op_base._transform_cpu(data)
                         err = np.abs(res_jax - res_base)
                         err_rel = np.abs(err / res_base)
                         results[dtype].append(
@@ -94,10 +122,26 @@ def validate(args):
                 for dataset in sorted(glob(os.path.join(sh, "*"))):
                     for dtype in results.keys():
                         data = np.load(dataset).astype(dtype)
-                        data_jax = jax.device_put(data, device=jax.devices("gpu")[0])
-                        data = cp.asarray(data)
-                        res_jax = op_jax._transform_gpu(data_jax)
-                        res_base = op_base._transform_gpu(data)
+                        if "convolve" in op or "correlate" in op:
+                            data = extract_data(data, op)
+                            weight = weights[op[-2:]].astype(dtype)
+                            data_jax = jax.device_put(
+                                data, device=jax.devices("gpu")[0]
+                            )
+                            weight_jax = jax.device_put(
+                                weight, device=jax.devices("gpu")[0]
+                            )
+                            data = cp.asarray(data)
+                            weight = cp.asarray(weight)
+                            res_jax = op_jax._transform_gpu(data_jax, weight_jax)
+                            res_base = op_base._transform_gpu(data, weight)
+                        else:
+                            data_jax = jax.device_put(
+                                data, device=jax.devices("gpu")[0]
+                            )
+                            data = cp.asarray(data)
+                            res_jax = op_jax._transform_gpu(data_jax)
+                            res_base = op_base._transform_gpu(data)
                         err = cp.abs(res_jax - res_base)
                         err_rel = cp.abs(err / res_base)
                         results[dtype].append(

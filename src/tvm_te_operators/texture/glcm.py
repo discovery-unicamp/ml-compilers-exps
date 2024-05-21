@@ -2,7 +2,6 @@ from tvm import te, tir
 import tvm.topi as topi
 import numpy as np
 
-from tvm_te_operators.complex_trace.fft import FFT, IFFT
 from tvm_te_operators.utils import (
     get_name,
 )
@@ -10,7 +9,7 @@ from tvm_te_operators.utils import (
 
 class GLCMBase:
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         self._glcm_size = glcm_size
         self._window_size = window_size
@@ -37,8 +36,25 @@ class GLCMBase:
         return self.computation_context
 
     def _computation_kernel(self, X, x, y, z):
-        mi = 0
-        ma = 10
+        rx = te.reduce_axis((0, x), name="rx")
+        ry = te.reduce_axis((0, y), name="ry")
+        rz = te.reduce_axis((0, z), name="rz")
+
+        # Xmi = te.compute((x,y,), lambda i, j: te.min(X[i, j, rz], axis=rz), name="Xmi_z")
+        # Xmi = te.compute((x,), lambda i: te.min(Xmi[i, ry], axis=ry), name="Xmi_y")
+        Xmi = te.compute(
+            (1,), lambda _: te.min(X[rx, ry, rz], axis=[rx, ry, rz]), name="Xmi"
+        )
+
+        rx = te.reduce_axis((0, x), name="rx")
+        ry = te.reduce_axis((0, y), name="ry")
+        rz = te.reduce_axis((0, z), name="rz")
+        # Xma = te.compute((x,y,), lambda i, j: te.max(X[i, j, rz], axis=rz), name="Xma_z")
+        # Xma = te.compute((x,), lambda i: te.max(Xma[i, ry], axis=ry), name="Xma_y")
+        Xma = te.compute(
+            (1,), lambda _: te.max(X[rx, ry, rz], axis=[rx, ry, rz]), name="Xma"
+        )
+
         glcm_size = te.const(self._glcm_size, "int")
         window_size = te.const(self._window_size, "int")
         pad = self._window_size // 2
@@ -55,89 +71,147 @@ class GLCMBase:
 
         gray_scale = te.compute(
             (x, y + 2 * pad, z + 2 * pad),
-            lambda i, j, k: te.trunc(((Xpad[i, j, k] - mi) / (ma - mi)) * glcm_size),
+            lambda i, j, k: te.floor(
+                ((Xpad[i, j, k] - Xmi[0]) / (Xma[0] + 1 - Xmi[0])) * (glcm_size - 1)
+            ),
             name=get_name("gray_scale"),
         )
-
+        glcm_windows = te.compute(
+            (x, y, z, window_size, window_size),
+            lambda i, j, k, w1, w2: gray_scale[i, j + w1, k + w2],
+            name=get_name("glcm_exp"),
+        )
         if self._direction == 0:  # EAST
-            glcm_exp = te.compute(
-                (x, y, z, glcm_size, glcm_size, window_size, window_size - 1),
-                lambda i, j, k, idx, idy, w1, w2: te.if_then_else(
-                    te.all(
-                        gray_scale[i, j + w1, k + w2] == idx,
-                        gray_scale[i, j + w1, k + w2 + 1] == idy,
-                    ),
-                    te.const(1, "int"),
-                    te.const(0, "int"),
-                ),
-                name=get_name("glcm_exp"),
-            )
             r1 = te.reduce_axis((0, window_size), name="r1")
             r2 = te.reduce_axis((0, window_size - 1), name="r2")
-            total = te.const(self._window_size * (self._window_size - 1), "float")
-        elif self._direction == 1:  # SOUTH
-            glcm_exp = te.compute(
-                (x, y, z, glcm_size, glcm_size, window_size - 1, window_size),
-                lambda i, j, k, idx, idy, w1, w2: te.if_then_else(
-                    te.all(
-                        gray_scale[i, j + w1, k + w2] == idx,
-                        gray_scale[i, j + w1 + 1, k + w2] == idy,
+            glcm = te.compute(
+                (x, y, z, glcm_size, glcm_size),
+                lambda i, j, k, idx, idy: te.sum(
+                    te.if_then_else(
+                        te.any(
+                            te.all(
+                                glcm_windows[i, j, k, r1, r2] == idx,
+                                glcm_windows[i, j, k, r1, r2 + 1] == idy,
+                            ),
+                            te.all(
+                                glcm_windows[i, j, k, r1, r2] == idy,
+                                glcm_windows[i, j, k, r1, r2 + 1] == idx,
+                            ),
+                        ),
+                        te.if_then_else(
+                            idx == idy,
+                            te.const(2, "int"),
+                            te.const(1, "int"),
+                        ),
+                        te.const(0, "int"),
                     ),
-                    te.const(1, "int"),
-                    te.const(0, "int"),
+                    axis=[r1, r2],
                 ),
-                name=get_name("glcm_exp"),
+                name=get_name("glcm"),
             )
+            total = te.const(2 * self._window_size * (self._window_size - 1), X.dtype)
+        elif self._direction == 1:  # SOUTH
             r1 = te.reduce_axis((0, window_size - 1), name="r1")
             r2 = te.reduce_axis((0, window_size), name="r2")
-            total = te.const(self._window_size * (self._window_size - 1), "float")
-        elif self._direction == 2:  # SOTH_EAST
-            glcm_exp = te.compute(
-                (x, y, z, glcm_size, glcm_size, window_size - 1, window_size - 1),
-                lambda i, j, k, idx, idy, w1, w2: te.if_then_else(
-                    te.all(
-                        gray_scale[i, j + w1, k + w2] == idx,
-                        gray_scale[i, j + w1 + 1, k + w2 + 1] == idy,
-                    ),
-                    te.const(1, "int"),
-                    te.const(0, "int"),
-                ),
-                name=get_name("glcm_exp"),
-            )
-            r1 = te.reduce_axis((0, window_size - 1), name="r1")
-            r2 = te.reduce_axis((0, window_size - 1), name="r2")
-            total = te.const((self._window_size - 1) ** 2, "float")
-        elif self._direction == 3:  # SOTH_WEST
-            glcm_exp = te.compute(
-                (x, y, z, glcm_size, glcm_size, window_size - 1, window_size - 1),
-                lambda i, j, k, idx, idy, w1, w2: te.if_then_else(
-                    te.all(
-                        gray_scale[i, j + w1 + 1, k + w2] == idx,
-                        gray_scale[i, j + w1, k + w2 + 1] == idy,
-                    ),
-                    te.const(1, "int"),
-                    te.const(0, "int"),
-                ),
-                name=get_name("glcm_exp"),
-            )
-            r1 = te.reduce_axis((0, window_size - 1), name="r1")
-            r2 = te.reduce_axis((0, window_size - 1), name="r2")
-            total = te.const((self._window_size - 1) ** 2, "float")
 
-        glcm = te.compute(
+            glcm = te.compute(
+                (x, y, z, glcm_size, glcm_size),
+                lambda i, j, k, idx, idy: te.sum(
+                    te.if_then_else(
+                        te.any(
+                            te.all(
+                                glcm_windows[i, j, k, r1, r2] == idx,
+                                glcm_windows[i, j, k, r1 + 1, r2] == idy,
+                            ),
+                            te.all(
+                                glcm_windows[i, j, k, r1, r2] == idy,
+                                glcm_windows[i, j, k, r1 + 1, r2] == idx,
+                            ),
+                        ),
+                        te.if_then_else(
+                            idx == idy,
+                            te.const(2, "int"),
+                            te.const(1, "int"),
+                        ),
+                        te.const(0, "int"),
+                    ),
+                    axis=[r1, r2],
+                ),
+                name=get_name("glcm"),
+            )
+            total = te.const(2 * self._window_size * (self._window_size - 1), X.dtype)
+        elif self._direction == 2:  # SOTH_EAST
+            r1 = te.reduce_axis((0, window_size - 1), name="r1")
+            r2 = te.reduce_axis((0, window_size - 1), name="r2")
+            glcm = te.compute(
+                (x, y, z, glcm_size, glcm_size),
+                lambda i, j, k, idx, idy: te.sum(
+                    te.if_then_else(
+                        te.any(
+                            te.all(
+                                glcm_windows[i, j, k, r1, r2] == idx,
+                                glcm_windows[i, j, k, r1 + 1, r2 + 1] == idy,
+                            ),
+                            te.all(
+                                glcm_windows[i, j, k, r1, r2] == idy,
+                                glcm_windows[i, j, k, r1 + 1, r2 + 1] == idx,
+                            ),
+                        ),
+                        te.if_then_else(
+                            idx == idy,
+                            te.const(2, "int"),
+                            te.const(1, "int"),
+                        ),
+                        te.const(0, "int"),
+                    ),
+                    axis=[r1, r2],
+                ),
+                name=get_name("glcm"),
+            )
+            total = te.const(2 * (self._window_size - 1) ** 2, X.dtype)
+        elif self._direction == 3:  # SOTH_WEST
+            r1 = te.reduce_axis((0, window_size - 1), name="r1")
+            r2 = te.reduce_axis((0, window_size - 1), name="r2")
+
+            glcm = te.compute(
+                (x, y, z, glcm_size, glcm_size),
+                lambda i, j, k, idx, idy: te.sum(
+                    te.if_then_else(
+                        te.any(
+                            te.all(
+                                glcm_windows[i, j, k, r1 + 1, r2] == idx,
+                                glcm_windows[i, j, k, r1, r2 + 1] == idy,
+                            ),
+                            te.all(
+                                glcm_windows[i, j, k, r1 + 1, r2] == idy,
+                                glcm_windows[i, j, k, r1, r2 + 1] == idx,
+                            ),
+                        ),
+                        te.if_then_else(
+                            idx == idy,
+                            te.const(2, "int"),
+                            te.const(1, "int"),
+                        ),
+                        te.const(0, "int"),
+                    ),
+                    axis=[r1, r2],
+                ),
+                name=get_name("glcm"),
+            )
+            total = te.const(2 * (self._window_size - 1) ** 2, X.dtype)
+
+        glcm_normed = te.compute(
             (x, y, z, glcm_size, glcm_size),
-            lambda i, j, k, idx, idy: te.div(
-                te.sum(glcm_exp[i, j, k, idx, idy], axis=[r1, r2]), total
-            ),
-            name=get_name("glcm"),
+            lambda i, j, k, idx, idy: te.div(glcm[i, j, k, idx, idy], total),
+            name=get_name("glcm_normed"),
         )
 
-        return glcm
+        return (glcm_normed,)
 
 
 class GLCMEntropy(GLCMBase):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -153,14 +227,7 @@ class GLCMEntropy(GLCMBase):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
-        glcm = super()._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-        )
-
-        result = self._computation_kernel(glcm, x, y, z)
+        result = self._computation_kernel(X, x, y, z)
 
         self.computation_context = {
             "result": result,
@@ -169,13 +236,21 @@ class GLCMEntropy(GLCMBase):
         return self.computation_context
 
     def _computation_kernel(self, X, x, y, z):
+        glcm = super()._computation_kernel(
+            X,
+            x,
+            y,
+            z,
+        )[0]
+
         r1 = te.reduce_axis((0, self._glcm_size), name="r1")
         r2 = te.reduce_axis((0, self._glcm_size), name="r2")
         log = te.compute(
             (x, y, z, self._glcm_size, self._glcm_size),
             lambda i, j, k, idx, idy: te.if_then_else(
-                X[i, j, k] == 0,
-                te.const(0.0, "float32") - tir.log(X[i, j, k, idx, idy]),
+                glcm[i, j, k, idx, idy] == 0,
+                te.const(0.0, "float32"),
+                -tir.log(glcm[i, j, k, idx, idy]),
             ),
             name=get_name("log"),
         )
@@ -183,17 +258,17 @@ class GLCMEntropy(GLCMBase):
         entropy = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                X[i, j, k, r1, r2] * log[i, j, k, r1, r2], axis=[r1, r2]
+                glcm[i, j, k, r1, r2] * log[i, j, k, r1, r2], axis=[r1, r2]
             ),
             name=get_name("entropy"),
         )
 
-        return entropy
+        return (entropy,)
 
 
 class GLCMContrast(GLCMBase):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -209,14 +284,7 @@ class GLCMContrast(GLCMBase):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
-        glcm = super()._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-        )
-
-        result = self._computation_kernel(glcm, x, y, z)
+        result = self._computation_kernel(X, x, y, z)
 
         self.computation_context = {
             "result": result,
@@ -225,22 +293,29 @@ class GLCMContrast(GLCMBase):
         return self.computation_context
 
     def _computation_kernel(self, X, x, y, z):
+        glcm = super()._computation_kernel(
+            X,
+            x,
+            y,
+            z,
+        )[0]
         r1 = te.reduce_axis((0, self._glcm_size), name="r1")
         r2 = te.reduce_axis((0, self._glcm_size), name="r2")
 
         contrast = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                X[i, j, k, r1, r2] * te.power(r1 - r2, 2), axis=[r1, r2]
+                glcm[i, j, k, r1, r2] * te.power(tir.Cast("float", r1 - r2), 2),
+                axis=[r1, r2],
             ),
             name=get_name("contrast"),
         )
-        return contrast
+        return (contrast,)
 
 
 class GLCMDissimilarity(GLCMBase):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -256,14 +331,7 @@ class GLCMDissimilarity(GLCMBase):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
-        glcm = super()._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-        )
-
-        result = self._computation_kernel(glcm, x, y, z)
+        result = self._computation_kernel(X, x, y, z)
 
         self.computation_context = {
             "result": result,
@@ -272,20 +340,28 @@ class GLCMDissimilarity(GLCMBase):
         return self.computation_context
 
     def _computation_kernel(self, X, x, y, z):
+        glcm = super()._computation_kernel(
+            X,
+            x,
+            y,
+            z,
+        )[0]
         r1 = te.reduce_axis((0, self._glcm_size), name="r1")
         r2 = te.reduce_axis((0, self._glcm_size), name="r2")
 
         dissimilarity = te.compute(
             (x, y, z),
-            lambda i, j, k: te.sum(X[i, j, k, r1, r2] * te.abs(r1 - r2), axis=[r1, r2]),
+            lambda i, j, k: te.sum(
+                glcm[i, j, k, r1, r2] * te.abs(r1 - r2), axis=[r1, r2]
+            ),
             name=get_name("dissimilarity"),
         )
-        return dissimilarity
+        return (dissimilarity,)
 
 
 class GLCMHomogeneity(GLCMBase):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -301,14 +377,7 @@ class GLCMHomogeneity(GLCMBase):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
-        glcm = super()._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-        )
-
-        result = self._computation_kernel(glcm, x, y, z)
+        result = self._computation_kernel(X, x, y, z)
 
         self.computation_context = {
             "result": result,
@@ -317,22 +386,31 @@ class GLCMHomogeneity(GLCMBase):
         return self.computation_context
 
     def _computation_kernel(self, X, x, y, z):
+        glcm = super()._computation_kernel(
+            X,
+            x,
+            y,
+            z,
+        )[0]
         r1 = te.reduce_axis((0, self._glcm_size), name="r1")
         r2 = te.reduce_axis((0, self._glcm_size), name="r2")
 
         homogeneity = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                te.div(X[i, j, k, r1, r2], 1 + te.power(r1 - r2, 2)), axis=[r1, r2]
+                te.div(
+                    glcm[i, j, k, r1, r2], 1 + te.power(tir.Cast("float", r1 - r2), 2)
+                ),
+                axis=[r1, r2],
             ),
             name=get_name("homogeneity"),
         )
-        return homogeneity
+        return (homogeneity,)
 
 
 class GLCMASM(GLCMBase):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -348,14 +426,7 @@ class GLCMASM(GLCMBase):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
-        glcm = super()._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-        )
-
-        result = self._computation_kernel(glcm, x, y, z)
+        result = self._computation_kernel(X, x, y, z)
 
         self.computation_context = {
             "result": result,
@@ -364,20 +435,26 @@ class GLCMASM(GLCMBase):
         return self.computation_context
 
     def _computation_kernel(self, X, x, y, z):
+        glcm = super()._computation_kernel(
+            X,
+            x,
+            y,
+            z,
+        )[0]
         r1 = te.reduce_axis((0, self._glcm_size), name="r1")
         r2 = te.reduce_axis((0, self._glcm_size), name="r2")
 
         asm = te.compute(
             (x, y, z),
-            lambda i, j, k: te.sum(te.power(X[i, j, k, r1, r2], 2), axis=[r1, r2]),
+            lambda i, j, k: te.sum(te.power(glcm[i, j, k, r1, r2], 2), axis=[r1, r2]),
             name=get_name("asm"),
         )
-        return asm
+        return (asm,)
 
 
 class GLCMEnergy(GLCMASM):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -393,33 +470,32 @@ class GLCMEnergy(GLCMASM):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
+        result = self._computation_kernel(X, x, y, z)
+
+        self.computation_context = {
+            "result": result,
+            "input": (X,),
+        }
+        return self.computation_context
+
+    def _computation_kernel(self, X, x, y, z):
         asm = super()._computation_kernel(
             X,
             x,
             y,
             z,
-        )
-
-        result = self._computation_kernel(asm, x, y, z)
-
-        self.computation_context = {
-            "result": result,
-            "input": (X,),
-        }
-        return self.computation_context
-
-    def _computation_kernel(self, X, x, y, z):
+        )[0]
         energy = te.compute(
             (x, y, z),
-            lambda i, j, k: te.sqrt(X[i, j, k]),
+            lambda i, j, k: te.sqrt(asm[i, j, k]),
             name=get_name("energy"),
         )
-        return energy
+        return (energy,)
 
 
 class GLCMMean(GLCMBase):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -435,14 +511,7 @@ class GLCMMean(GLCMBase):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
-        glcm = super()._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-        )
-
-        result = self._computation_kernel(glcm, x, y, z)
+        result = self._computation_kernel(X, x, y, z)
 
         self.computation_context = {
             "result": result,
@@ -451,20 +520,26 @@ class GLCMMean(GLCMBase):
         return self.computation_context
 
     def _computation_kernel(self, X, x, y, z):
+        glcm = super()._computation_kernel(
+            X,
+            x,
+            y,
+            z,
+        )[0]
         r1 = te.reduce_axis((0, self._glcm_size), name="r1")
         r2 = te.reduce_axis((0, self._glcm_size), name="r2")
 
         mean = te.compute(
             (x, y, z),
-            lambda i, j, k: te.sum(r1 * X[i, j, k, r1, r2], axis=[r1, r2]),
+            lambda i, j, k: te.sum(r2 * glcm[i, j, k, r1, r2], axis=[r1, r2]),
             name=get_name("mean"),
         )
-        return mean
+        return (mean,)
 
 
 class GLCMVariance(GLCMBase):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -480,14 +555,7 @@ class GLCMVariance(GLCMBase):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
-        glcm = super()._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-        )
-
-        result = self._computation_kernel(glcm, x, y, z)
+        result = self._computation_kernel(X, x, y, z)
 
         self.computation_context = {
             "result": result,
@@ -496,28 +564,35 @@ class GLCMVariance(GLCMBase):
         return self.computation_context
 
     def _computation_kernel(self, X, x, y, z):
+        glcm = super()._computation_kernel(
+            X,
+            x,
+            y,
+            z,
+        )[0]
         r1 = te.reduce_axis((0, self._glcm_size), name="r1")
         r2 = te.reduce_axis((0, self._glcm_size), name="r2")
 
         mean = te.compute(
             (x, y, z),
-            lambda i, j, k: te.sum(r1 * X[i, j, k, r1, r2], axis=[r1, r2]),
+            lambda i, j, k: te.sum(r1 * glcm[i, j, k, r1, r2], axis=[r1, r2]),
             name=get_name("mean"),
         )
-
+        r1 = te.reduce_axis((0, self._glcm_size), name="r1")
+        r2 = te.reduce_axis((0, self._glcm_size), name="r2")
         variance = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                X[i, j, k, r1, r2] * te.power(r1 - mean, 2), axis=[r1, r2]
+                glcm[i, j, k, r1, r2] * te.power(r1 - mean[i, j, k], 2), axis=[r1, r2]
             ),
             name=get_name("variance"),
         )
-        return variance
+        return (variance,)
 
 
 class GLCMStandardDeviation(GLCMVariance):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -533,33 +608,33 @@ class GLCMStandardDeviation(GLCMVariance):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
+        result = self._computation_kernel(X, x, y, z)
+
+        self.computation_context = {
+            "result": result,
+            "input": (X,),
+        }
+        return self.computation_context
+
+    def _computation_kernel(self, X, x, y, z):
         variance = super()._computation_kernel(
             X,
             x,
             y,
             z,
-        )
+        )[0]
 
-        result = self._computation_kernel(variance, x, y, z)
-
-        self.computation_context = {
-            "result": result,
-            "input": (X,),
-        }
-        return self.computation_context
-
-    def _computation_kernel(self, X, x, y, z):
         std = te.compute(
             (x, y, z),
-            lambda i, j, k: te.sqrt(X[i, j, k]),
+            lambda i, j, k: te.sqrt(variance[i, j, k]),
             name=get_name("std"),
         )
-        return std
+        return (std,)
 
 
 class GLCMCorrelation(GLCMBase):
     def __init__(
-        self, glcm_size=16, window_size=7, direction=0, computation_context={}
+        self, glcm_size=16, window_size=7, direction=1, computation_context={}
     ):
         super().__init__(
             glcm_size=glcm_size,
@@ -575,14 +650,7 @@ class GLCMCorrelation(GLCMBase):
         z = computation_context.get("z", 64)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
-        glcm = super()._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-        )
-
-        result = self._computation_kernel(glcm, x, y, z)
+        result = self._computation_kernel(X, x, y, z)
 
         self.computation_context = {
             "result": result,
@@ -591,28 +659,42 @@ class GLCMCorrelation(GLCMBase):
         return self.computation_context
 
     def _computation_kernel(self, X, x, y, z):
+        glcm = super()._computation_kernel(
+            X,
+            x,
+            y,
+            z,
+        )[0]
+
         r1 = te.reduce_axis((0, self._glcm_size), name="r1")
         r2 = te.reduce_axis((0, self._glcm_size), name="r2")
 
         mean = te.compute(
             (x, y, z),
-            lambda i, j, k: te.sum(r1 * X[i, j, k, r1, r2], axis=[r1, r2]),
+            lambda i, j, k: te.sum(r1 * glcm[i, j, k, r1, r2], axis=[r1, r2]),
             name=get_name("mean"),
         )
+
+        r1 = te.reduce_axis((0, self._glcm_size), name="r1")
+        r2 = te.reduce_axis((0, self._glcm_size), name="r2")
 
         variance = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                X[i, j, k, r1, r2] * te.power(r1 - mean, 2), axis=[r1, r2]
+                glcm[i, j, k, r1, r2] * te.power(r1 - mean[i, j, k], 2), axis=[r1, r2]
             ),
             name=get_name("variance"),
         )
 
+        r1 = te.reduce_axis((0, self._glcm_size), name="r1")
+        r2 = te.reduce_axis((0, self._glcm_size), name="r2")
+
         correlation = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                te.div((r1 - mean) * (r2 - mean), variance[i, j, k]), axis=[r1, r2]
+                te.div((r1 - mean[i, j, k]) * (r2 - mean[i, j, k]), variance[i, j, k]),
+                axis=[r1, r2],
             ),
             name=get_name("correlation"),
         )
-        return correlation
+        return (correlation,)

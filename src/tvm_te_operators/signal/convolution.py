@@ -4,6 +4,7 @@ from tvm_te_operators.utils import (
     get_name,
 )
 
+
 class Convolution1D:
     def __init__(self, computation_context={}):
         self._set_computation_context(computation_context)
@@ -14,7 +15,9 @@ class Convolution1D:
         z = computation_context.get("z", 256)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
         w = computation_context.get("w", 3)
-        W = computation_context.get("W", te.placeholder((1, 1, w), dtype=X.dtype, name=get_name("W")))
+        W = computation_context.get(
+            "W", te.placeholder((1, 1, w), dtype=X.dtype, name=get_name("W"))
+        )
 
         result = self._computation_kernel(
             X,
@@ -27,7 +30,7 @@ class Convolution1D:
 
         self.computation_context = {
             "result": result,
-            "input": (X,W),
+            "input": (X, W),
         }
         return self.computation_context
 
@@ -35,7 +38,11 @@ class Convolution1D:
         pad = w // 2
         # Pad input
         Xpad = te.compute(
-            (x, y, z + 2 * pad,),
+            (
+                x,
+                y,
+                z + 2 * pad,
+            ),
             lambda i, j, k: te.if_then_else(
                 te.all(k >= pad, k - pad < z),
                 X[i, j, k - pad],
@@ -48,13 +55,11 @@ class Convolution1D:
         # Compute the convolution
         res = te.compute(
             (x, y, z),
-            lambda i, j, k: te.sum(
-                Xpad[i, j, k + rz] * W[0, 0, w-rz], axis=[rz]
-            ),
+            lambda i, j, k: te.sum(Xpad[i, j, k + rz] * W[0, 0, w - rz - 1], axis=[rz]),
             name=get_name("conv1d"),
         )
         return (res,)
-    
+
 
 class Convolution2D:
     def __init__(self, computation_context={}):
@@ -67,7 +72,9 @@ class Convolution2D:
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
         w1 = computation_context.get("w1", 3)
         w2 = computation_context.get("w2", 3)
-        W = computation_context.get("W", te.placeholder((1, w1,w2), dtype=X.dtype, name=get_name("W")))
+        W = computation_context.get(
+            "W", te.placeholder((1, w1, w2), dtype=X.dtype, name=get_name("W"))
+        )
 
         result = self._computation_kernel(
             X,
@@ -81,7 +88,7 @@ class Convolution2D:
 
         self.computation_context = {
             "result": result,
-            "input": (X,W),
+            "input": (X, W),
         }
         return self.computation_context
 
@@ -92,7 +99,7 @@ class Convolution2D:
             (x, y + 2 * pad[0], z + 2 * pad[1]),
             lambda i, j, k: te.if_then_else(
                 te.all(j >= pad[0], j - pad[0] < y, k >= pad[1], k - pad[1] < z),
-                X[x, i - pad[0], j - pad[1]],
+                X[i, j - pad[0], k - pad[1]],
                 te.const(0.0, X.dtype),
             ),
             name=get_name("Xpad"),
@@ -104,12 +111,12 @@ class Convolution2D:
         res = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                Xpad[i, j + ry, k + rz] * W[0, w1-ry, w2-rz], axis=[ry, rz]
+                Xpad[i, j + ry, k + rz] * W[0, w1 - ry - 1, w2 - rz - 1], axis=[ry, rz]
             ),
             name=get_name("conv2d"),
         )
         return (res,)
-    
+
 
 class Convolution3D:
     def __init__(self, computation_context={}):
@@ -119,26 +126,19 @@ class Convolution3D:
         x = computation_context.get("x", 64)
         y = computation_context.get("y", 64)
         z = computation_context.get("z", 256)
-        X = computation_context.get("X", te.placeholder((x, y,z), name=get_name("X")))
+        X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
         w1 = computation_context.get("w1", 3)
         w2 = computation_context.get("w2", 3)
         w3 = computation_context.get("w3", 3)
-        W = computation_context.get("W", te.placeholder((w1, w2, w3), dtype=X.dtype, name=get_name("W")))
-
-        result = self._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-            W,
-            w1,
-            w2,
-            w3
+        W = computation_context.get(
+            "W", te.placeholder((w1, w2, w3), dtype=X.dtype, name=get_name("W"))
         )
+
+        result = self._computation_kernel(X, x, y, z, W, w1, w2, w3)
 
         self.computation_context = {
             "result": result,
-            "input": (X,W),
+            "input": (X, W),
         }
         return self.computation_context
 
@@ -148,7 +148,14 @@ class Convolution3D:
         Xpad = te.compute(
             (x + 2 * pad[0], y + 2 * pad[1], z + 2 * pad[2]),
             lambda i, j, k: te.if_then_else(
-                te.all(i >= pad[0], i - pad[0] < x, j >= pad[1], j - pad[1] < y, k >= pad[2], k - pad[2] < z),
+                te.all(
+                    i >= pad[0],
+                    i - pad[0] < x,
+                    j >= pad[1],
+                    j - pad[1] < y,
+                    k >= pad[2],
+                    k - pad[2] < z,
+                ),
                 X[i - pad[0], j - pad[1], k - pad[2]],
                 te.const(0.0, X.dtype),
             ),
@@ -162,11 +169,13 @@ class Convolution3D:
         res = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                Xpad[i + rx, j + ry, k + rz] * W[w1 - rx, w2 - ry, w3 - rz], axis=[rx, ry, rz]
+                Xpad[i + rx, j + ry, k + rz] * W[w1 - rx - 1, w2 - ry - 1, w3 - rz - 1],
+                axis=[rx, ry, rz],
             ),
             name=get_name("conv3d"),
         )
         return (res,)
+
 
 class Correlation1D:
     def __init__(self, computation_context={}):
@@ -178,7 +187,9 @@ class Correlation1D:
         z = computation_context.get("z", 256)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
         w = computation_context.get("w", 3)
-        W = computation_context.get("W", te.placeholder((1, 1, w), dtype=X.dtype, name=get_name("W")))
+        W = computation_context.get(
+            "W", te.placeholder((1, 1, w), dtype=X.dtype, name=get_name("W"))
+        )
 
         result = self._computation_kernel(
             X,
@@ -191,7 +202,7 @@ class Correlation1D:
 
         self.computation_context = {
             "result": result,
-            "input": (X,W),
+            "input": (X, W),
         }
         return self.computation_context
 
@@ -199,7 +210,11 @@ class Correlation1D:
         pad = w // 2
         # Pad input
         Xpad = te.compute(
-            (x, y, z + 2 * pad,),
+            (
+                x,
+                y,
+                z + 2 * pad,
+            ),
             lambda i, j, k: te.if_then_else(
                 te.all(k >= pad, k - pad < z),
                 X[i, j, k - pad],
@@ -212,13 +227,11 @@ class Correlation1D:
         # Compute the Correlation
         res = te.compute(
             (x, y, z),
-            lambda i, j, k: te.sum(
-                Xpad[i, j, k + rz] * W[0, 0, rz], axis=[rz]
-            ),
+            lambda i, j, k: te.sum(Xpad[i, j, k + rz] * W[0, 0, rz], axis=[rz]),
             name=get_name("cor1d"),
         )
         return (res,)
-    
+
 
 class Correlation2D:
     def __init__(self, computation_context={}):
@@ -231,7 +244,9 @@ class Correlation2D:
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
         w1 = computation_context.get("w1", 3)
         w2 = computation_context.get("w2", 3)
-        W = computation_context.get("W", te.placeholder((1, w1,w2), dtype=X.dtype, name=get_name("W")))
+        W = computation_context.get(
+            "W", te.placeholder((1, w1, w2), dtype=X.dtype, name=get_name("W"))
+        )
 
         result = self._computation_kernel(
             X,
@@ -245,7 +260,7 @@ class Correlation2D:
 
         self.computation_context = {
             "result": result,
-            "input": (X,W),
+            "input": (X, W),
         }
         return self.computation_context
 
@@ -256,7 +271,7 @@ class Correlation2D:
             (x, y + 2 * pad[0], z + 2 * pad[1]),
             lambda i, j, k: te.if_then_else(
                 te.all(j >= pad[0], j - pad[0] < y, k >= pad[1], k - pad[1] < z),
-                X[x, i - pad[0], j - pad[1]],
+                X[i, j - pad[0], k - pad[1]],
                 te.const(0.0, X.dtype),
             ),
             name=get_name("Xpad"),
@@ -273,7 +288,7 @@ class Correlation2D:
             name=get_name("cor2d"),
         )
         return (res,)
-    
+
 
 class Correlation3D:
     def __init__(self, computation_context={}):
@@ -283,26 +298,19 @@ class Correlation3D:
         x = computation_context.get("x", 64)
         y = computation_context.get("y", 64)
         z = computation_context.get("z", 256)
-        X = computation_context.get("X", te.placeholder((x, y,z), name=get_name("X")))
+        X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
         w1 = computation_context.get("w1", 3)
         w2 = computation_context.get("w2", 3)
         w3 = computation_context.get("w3", 3)
-        W = computation_context.get("W", te.placeholder((w1, w2, w3), dtype=X.dtype, name=get_name("W")))
-
-        result = self._computation_kernel(
-            X,
-            x,
-            y,
-            z,
-            W,
-            w1,
-            w2,
-            w3
+        W = computation_context.get(
+            "W", te.placeholder((w1, w2, w3), dtype=X.dtype, name=get_name("W"))
         )
+
+        result = self._computation_kernel(X, x, y, z, W, w1, w2, w3)
 
         self.computation_context = {
             "result": result,
-            "input": (X,W),
+            "input": (X, W),
         }
         return self.computation_context
 
@@ -312,7 +320,14 @@ class Correlation3D:
         Xpad = te.compute(
             (x + 2 * pad[0], y + 2 * pad[1], z + 2 * pad[2]),
             lambda i, j, k: te.if_then_else(
-                te.all(i >= pad[0], i - pad[0] < x, j >= pad[1], j - pad[1] < y, k >= pad[2], k - pad[2] < z),
+                te.all(
+                    i >= pad[0],
+                    i - pad[0] < x,
+                    j >= pad[1],
+                    j - pad[1] < y,
+                    k >= pad[2],
+                    k - pad[2] < z,
+                ),
                 X[i - pad[0], j - pad[1], k - pad[2]],
                 te.const(0.0, X.dtype),
             ),

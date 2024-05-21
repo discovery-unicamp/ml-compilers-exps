@@ -35,7 +35,18 @@ attr_list = [
     "convolve2d",
     "correlate2d",
     "convolve3d",
-    "correlate3d"
+    "correlate3d",
+    # "glcm-base",
+#     "glcm-asm",
+#     "glcm-contrast",
+#     "glcm-correlation",
+#     "glcm-variance",
+#     "glcm-energy",
+#     "glcm-entropy",
+#     "glcm-mean",
+#     "glcm-std",
+#     "glcm-dissimilarity",
+#     "glcm-homogeneity"
 ]
 
 
