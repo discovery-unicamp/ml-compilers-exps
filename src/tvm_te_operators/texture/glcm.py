@@ -72,7 +72,7 @@ class GLCMBase:
         gray_scale = te.compute(
             (x, y + 2 * pad, z + 2 * pad),
             lambda i, j, k: te.floor(
-                ((Xpad[i, j, k] - Xmi[0]) / (Xma[0] + 1 - Xmi[0])) * (glcm_size - 1)
+                ((Xpad[i, j, k] - Xmi[0]) / (Xma[0] - Xmi[0])) * (glcm_size - 1)
             ),
             name=get_name("gray_scale"),
         )
