@@ -146,8 +146,6 @@ def validate(args):
                         res_base = op_base._transform_gpu(cp.array(data)).get()
                     else:
                         res_base = op_base._transform_cpu(data)
-                np.save("tvm_c.npy", out_tvm.numpy())
-                np.save("cpu.npy", res_base)
                 err = np.abs(out_tvm.numpy() - res_base)
                 err_rel = np.abs(err / res_base)
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))
@@ -193,8 +191,6 @@ def validate(args):
                     data = cp.asarray(data)
                     op_tvm.transform(data_tvm, out_tvm)
                     res_base = op_base._transform_gpu(data)
-                np.save("tvm_g.npy", out_tvm.numpy())
-                np.save("gpu.npy", res_base.get())
                 err = np.abs(out_tvm.numpy() - res_base.get())
                 err_rel = np.abs(err / res_base.get())
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))
