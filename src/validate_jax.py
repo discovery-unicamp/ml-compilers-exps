@@ -11,6 +11,7 @@ jax.config.update("jax_enable_x64", True)
 from pathlib import Path
 from jax_operators.operator_generic import JAXOperator
 from dasf_seismic.attributes.complex_trace import *
+from dasf_seismic.attributes.texture import *
 from baseline.signal import (
     Convolve1D,
     Convolve2D,
@@ -37,12 +38,22 @@ operators = {
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
-    "convolve1d": Convolve1D,
-    "correlate1d": Correlate1D,
-    "convolve2d": Convolve2D,
-    "correlate2d": Correlate2D,
-    "convolve3d": Convolve3D,
-    "correlate3d": Correlate3D,
+    # "convolve1d": Convolve1D,
+    # "correlate1d": Correlate1D,
+    # "convolve2d": Convolve2D,
+    # "correlate2d": Correlate2D,
+    # "convolve3d": Convolve3D,
+    # "correlate3d": Correlate3D,
+    "glcm-asm": GLCMASM,
+    "glcm-contrast": GLCMContrast,
+    "glcm-correlation": GLCMCorrelation,
+    "glcm-variance": GLCMVariance,
+    "glcm-energy": GLCMEnergy,
+    "glcm-entropy": GLCMEntropy,
+    "glcm-mean": GLCMMean,
+    "glcm-std": GLCMStandardDeviation,
+    "glcm-dissimilarity": GLCMDissimilarity,
+    "glcm-homogeneity": GLCMHomogeneity,
 }
 
 
@@ -95,7 +106,12 @@ def validate(args):
                                 data, device=jax.devices("cpu")[0]
                             )
                             res_jax = op_jax._transform_cpu(data_jax)
-                            res_base = op_base._transform_cpu(data)
+                            if "glcm" in op:  # GLCM baseline on CPU is too slow
+                                import cupy as cp
+
+                                res_base = op_base._transform_gpu(cp.array(data)).get()
+                            else:
+                                res_base = op_base._transform_cpu(data)
                         err = np.abs(res_jax - res_base)
                         err_rel = np.abs(err / res_base)
                         results[dtype].append(

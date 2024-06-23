@@ -28,6 +28,19 @@ from .signal import (
     correlate3d,
 )
 
+from .texture import (
+    glcm_asm,
+    glcm_contrast,
+    glcm_correlation,
+    glcm_dissimilarity,
+    glcm_energy,
+    glcm_entropy,
+    glcm_homogeneity,
+    glcm_mean,
+    glcm_std,
+    glcm_variance,
+)
+
 operators = {
     "hilbert": hilbert,
     "envelope": envelope,
@@ -51,6 +64,16 @@ operators = {
     "correlate2d": correlate2d,
     "convolve3d": convolve3d,
     "correlate3d": correlate3d,
+    "glcm-asm": glcm_asm,
+    "glcm-contrast": glcm_contrast,
+    "glcm-correlation": glcm_correlation,
+    "glcm-dissimilarity": glcm_dissimilarity,
+    "glcm-energy": glcm_energy,
+    "glcm-entropy": glcm_entropy,
+    "glcm-homogeneity": glcm_homogeneity,
+    "glcm-mean": glcm_mean,
+    "glcm-std": glcm_std,
+    "glcm-variance": glcm_variance,
 }
 
 

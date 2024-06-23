@@ -59,28 +59,30 @@ class GLCMBase:
         window_size = te.const(self._window_size, "int")
         pad = self._window_size // 2
 
-        Xpad = te.compute(
-            (x, y + 2 * pad, z + 2 * pad),
-            lambda i, j, k: te.if_then_else(
-                te.all(j >= pad, j - pad < y, k >= pad, k - pad < z),
-                X[i, j - pad, k - pad],
-                te.const(0.0, X.dtype),
-            ),
-            name=get_name("Xpad"),
-        )
-
         gray_scale = te.compute(
-            (x, y + 2 * pad, z + 2 * pad),
+            (x, y, z),
             lambda i, j, k: te.floor(
-                ((Xpad[i, j, k] - Xmi[0]) / (Xma[0] - Xmi[0])) * (glcm_size - 1)
+                ((X[i, j, k] - Xmi[0]) / (Xma[0] - Xmi[0])) * (glcm_size - 1)
             ),
             name=get_name("gray_scale"),
         )
+
+        gray_scale_padded = te.compute(
+            (x, y + 2 * pad, z + 2 * pad),
+            lambda i, j, k: te.if_then_else(
+                te.all(j >= pad, j - pad < y, k >= pad, k - pad < z),
+                gray_scale[i, j - pad, k - pad],
+                te.const(0.0, X.dtype),
+            ),
+            name=get_name("gray_scale_padded"),
+        )
+
         glcm_windows = te.compute(
             (x, y, z, window_size, window_size),
-            lambda i, j, k, w1, w2: gray_scale[i, j + w1, k + w2],
+            lambda i, j, k, w1, w2: gray_scale_padded[i, j + w1, k + w2],
             name=get_name("glcm_exp"),
         )
+
         if self._direction == 0:  # EAST
             r1 = te.reduce_axis((0, window_size), name="r1")
             r2 = te.reduce_axis((0, window_size - 1), name="r2")
@@ -686,13 +688,24 @@ class GLCMCorrelation(GLCMBase):
             name=get_name("variance"),
         )
 
+        variance_wo_0s = te.compute(
+            (x, y, z),
+            lambda i, j, k: te.if_then_else(
+                variance[i, j, k] == 0, te.const(1, "float32"), variance[i, j, k]
+            ),
+            name=get_name("variance_wo_0s"),
+        )
+
         r1 = te.reduce_axis((0, self._glcm_size), name="r1")
         r2 = te.reduce_axis((0, self._glcm_size), name="r2")
 
         correlation = te.compute(
             (x, y, z),
             lambda i, j, k: te.sum(
-                te.div((r1 - mean[i, j, k]) * (r2 - mean[i, j, k]), variance[i, j, k]),
+                glcm[i, j, k, r1, r2]
+                * te.div(
+                    (r1 - mean[i, j, k]) * (r2 - mean[i, j, k]), variance_wo_0s[i, j, k]
+                ),
                 axis=[r1, r2],
             ),
             name=get_name("correlation"),

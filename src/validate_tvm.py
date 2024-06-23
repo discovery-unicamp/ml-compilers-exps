@@ -36,22 +36,22 @@ operators = {
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
-    "convolve1d": Convolve1D,
-    "correlate1d": Correlate1D,
-    "convolve2d": Convolve2D,
-    "correlate2d": Correlate2D,
-    "convolve3d": Convolve3D,
-    "correlate3d": Correlate3D,
-    # "glcm-asm": GLCMASM,
-    # "glcm-contrast": GLCMContrast,
-    # "glcm-correlation": GLCMCorrelation,
-    # "glcm-variance": GLCMVariance,
-    # "glcm-energy": GLCMEnergy,
-    # "glcm-entropy": GLCMEntropy,
-    # "glcm-mean": GLCMMean,
-    # "glcm-std": GLCMStandardDeviation,
-    # "glcm-dissimilarity": GLCMDissimilarity,
-    # "glcm-homogeneity": GLCMHomogeneity
+    # "convolve1d": Convolve1D,
+    # "correlate1d": Correlate1D,
+    # "convolve2d": Convolve2D,
+    # "correlate2d": Correlate2D,
+    # "convolve3d": Convolve3D,
+    # "correlate3d": Correlate3D,
+    "glcm-asm": GLCMASM,
+    "glcm-contrast": GLCMContrast,
+    "glcm-correlation": GLCMCorrelation,
+    "glcm-variance": GLCMVariance,
+    "glcm-energy": GLCMEnergy,
+    "glcm-entropy": GLCMEntropy,
+    "glcm-mean": GLCMMean,
+    "glcm-std": GLCMStandardDeviation,
+    "glcm-dissimilarity": GLCMDissimilarity,
+    "glcm-homogeneity": GLCMHomogeneity,
 }
 
 
@@ -140,7 +140,12 @@ def validate(args):
                         data_tvm.shape, dtype=data_tvm.dtype, device=dev
                     )
                     op_tvm.transform(data_tvm, out_tvm)
-                    res_base = op_base._transform_cpu(data)
+                    if "glcm" in op:  # GLCM baseline on CPU is too slow
+                        import cupy as cp
+
+                        res_base = op_base._transform_gpu(cp.array(data)).get()
+                    else:
+                        res_base = op_base._transform_cpu(data)
                 np.save("tvm_c.npy", out_tvm.numpy())
                 np.save("cpu.npy", res_base)
                 err = np.abs(out_tvm.numpy() - res_base)

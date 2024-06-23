@@ -120,21 +120,29 @@ def glcm_asm(X, levels=16, direction=1):
 
 def glcm_correlation(X, levels=16, direction=1):
     glcm = glcm_base(X, levels, direction)
-    I, J = jnp.ogrid[0:levels, 0:levels]
-    return
+    J, I = jnp.ogrid[0:levels, 0:levels]
+    I = I.reshape(1, 1, 1, *I.shape)
+    J = J.reshape(1, 1, 1, *J.shape)
+    mean = jnp.sum(I * glcm, axis=(-2, -1))
+    mean = mean.reshape(*mean.shape, 1, 1)
+    var = jnp.sum(glcm * ((I - mean) ** 2), axis=(-2, -1))
+    var = var.reshape(*var.shape, 1, 1)
+    var_wo_0s = jnp.where(var == 0, 1, var)
+    return jnp.sum((glcm * (((I - mean) * (J - mean)) / var_wo_0s)), axis=(-2, -1))
 
 
 def glcm_mean(X, levels=16, direction=1):
     glcm = glcm_base(X, levels, direction)
-    I = jnp.np.arange(levels)
+    I = jnp.arange(levels).reshape(1, 1, 1, levels, 1)
     mean = jnp.sum(I * glcm, axis=(-2, -1))
     return mean
 
 
 def glcm_variance(X, levels=16, direction=1):
     glcm = glcm_base(X, levels, direction)
-    I = jnp.np.arange(levels)
+    I = jnp.arange(levels).reshape(1, 1, 1, 1, levels)
     mean = jnp.sum(I * glcm, axis=(-2, -1))
+    mean = mean.reshape(*mean.shape, 1, 1)
     return jnp.sum(glcm * ((I - mean) ** 2), axis=(-2, -1))
 
 
@@ -145,7 +153,7 @@ def glcm_std(X, levels=16, direction=1):
 
 def glcm_entropy(X, levels=16, direction=1):
     glcm = glcm_base(X, levels, direction)
-    glcm_wo_0s = glcm.at(jnp.where(X == 0)).set(1)
+    glcm_wo_0s = jnp.where(glcm == 0, 1, glcm)
     log = -jnp.log(glcm_wo_0s)
-    results = np.sum(glcm * log, axis=(-2, -1))
+    results = jnp.sum(glcm * log, axis=(-2, -1))
     return results
