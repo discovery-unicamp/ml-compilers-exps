@@ -10,7 +10,8 @@ MAX_THREADS=$5
 echo "CPU baselines"
 eval "$(conda shell.bash hook)"
 
-for env in  default intel_conda amd amd_gcc openblas; do
+# intel_conda amd amd_gcc openblas
+for env in  default; do
     echo "Running on ${env}"
     conda deactivate
     conda activate $env
