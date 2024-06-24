@@ -14,12 +14,18 @@ class GLCMBase:
         self._glcm_size = glcm_size
         self._window_size = window_size
         self._direction = direction
+        self._use_i64 = False
         self._set_computation_context(computation_context)
 
     def _set_computation_context(self, computation_context):
         x = computation_context.get("x", 1)
         y = computation_context.get("y", 1)
         z = computation_context.get("z", 64)
+        if x*y*z >= 2**17: # volumes larger than that result in indexing problems
+            self._use_i64 = True
+            x = np.int64(x)
+            y = np.int64(y)
+            z = np.int64(z)
         X = computation_context.get("X", te.placeholder((x, y, z), name=get_name("X")))
 
         result = self._computation_kernel(
@@ -40,8 +46,6 @@ class GLCMBase:
         ry = te.reduce_axis((0, y), name="ry")
         rz = te.reduce_axis((0, z), name="rz")
 
-        # Xmi = te.compute((x,y,), lambda i, j: te.min(X[i, j, rz], axis=rz), name="Xmi_z")
-        # Xmi = te.compute((x,), lambda i: te.min(Xmi[i, ry], axis=ry), name="Xmi_y")
         Xmi = te.compute(
             (1,), lambda _: te.min(X[rx, ry, rz], axis=[rx, ry, rz]), name="Xmi"
         )
@@ -49,15 +53,16 @@ class GLCMBase:
         rx = te.reduce_axis((0, x), name="rx")
         ry = te.reduce_axis((0, y), name="ry")
         rz = te.reduce_axis((0, z), name="rz")
-        # Xma = te.compute((x,y,), lambda i, j: te.max(X[i, j, rz], axis=rz), name="Xma_z")
-        # Xma = te.compute((x,), lambda i: te.max(Xma[i, ry], axis=ry), name="Xma_y")
+
         Xma = te.compute(
             (1,), lambda _: te.max(X[rx, ry, rz], axis=[rx, ry, rz]), name="Xma"
         )
 
-        glcm_size = te.const(self._glcm_size, "int")
-        window_size = te.const(self._window_size, "int")
+        glcm_size = te.const(self._glcm_size, "int64" if self._use_i64 else "int")
+        window_size = te.const(self._window_size, "int64" if self._use_i64 else "int")
         pad = self._window_size // 2
+        if self._use_i64:
+            pad = np.int64(pad)
 
         gray_scale = te.compute(
             (x, y, z),
