@@ -39,7 +39,7 @@ attrs = [
     # "correlate3d",
     # "glcm-asm",
     # "glcm-contrast",
-    "glcm-correlation",
+    # "glcm-correlation",
     # "glcm-variance",
     "glcm-energy",
     "glcm-entropy",
