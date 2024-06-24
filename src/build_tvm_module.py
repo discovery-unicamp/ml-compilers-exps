@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 from time import perf_counter
+import numpy as np
 
 import tvm
 from tvm import te, auto_scheduler
@@ -93,6 +94,10 @@ operators = {
 
 @auto_scheduler.register_workload
 def search_operator(x, y, z, dtype, operator):
+    if "glcm" in operator and x*y*z >= 2**17: # volumes larger than that result in indexing problems with GLCM
+        x = np.int64(x)
+        y = np.int64(y)
+        z = np.int64(z)
     X = te.placeholder((x, y, z), name="X", dtype=dtype)
     if operator == "ifft":
         Y = te.placeholder((x, y, z), name="Y", dtype=dtype)
