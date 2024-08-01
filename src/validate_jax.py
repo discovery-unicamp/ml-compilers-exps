@@ -46,7 +46,7 @@ operators = {
     # "correlate3d": Correlate3D,
     "glcm-asm": GLCMASM,
     "glcm-contrast": GLCMContrast,
-    "glcm-correlation": GLCMCorrelation,
+    # "glcm-correlation": GLCMCorrelation,
     "glcm-variance": GLCMVariance,
     # "glcm-energy": GLCMEnergy,
     # "glcm-entropy": GLCMEntropy,
