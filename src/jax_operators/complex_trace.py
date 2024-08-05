@@ -3,6 +3,10 @@ import numpy as np
 from .utils import first_derivative
 
 
+def fft(X):
+    return jnp.fft.fft(X, axis=-1)
+
+
 def hilbert(X):
     _, _, z = X.shape
     freq = jnp.fft.fft(X, axis=-1)

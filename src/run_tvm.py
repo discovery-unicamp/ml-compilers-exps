@@ -15,6 +15,7 @@ import tvm
 from utils import extract_data_tvm, weights_tvm
 
 attrs = [
+    "fft",
     # "hilbert",
     # "envelope",
     # "inst-phase",
@@ -37,15 +38,15 @@ attrs = [
     # "correlate2d",
     # "convolve3d",
     # "correlate3d",
-    "glcm-asm",
-    "glcm-contrast",
+    # "glcm-asm",
+    # "glcm-contrast",
     # "glcm-correlation",
-    "glcm-variance",
+    # "glcm-variance",
     # "glcm-energy",
     # "glcm-entropy",
-    "glcm-mean",
-    "glcm-std",
-    "glcm-dissimilarity",
+    # "glcm-mean",
+    # "glcm-std",
+    # "glcm-dissimilarity",
     # "glcm-homogeneity",
 ]
 
@@ -63,7 +64,7 @@ def run_attr_op(args, name):
         data_tvm = tvm.nd.array(data, device=dev)
         out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
         op = TVMOperator(module, dev)
-        if name in ["hilbert"]:
+        if name in ["fft", "hilbert"]:
             out_tvm_2 = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
             execution_times = timeit.repeat(
                 "op.transform(data_tvm, out_tvm, out_tvm_2)",
@@ -94,7 +95,7 @@ def run_attr_op(args, name):
         data_2 = extract_data_tvm(data_2, name)
         data_2_tvm = tvm.nd.array(data_2, device=dev)
         out_2_tvm = tvm.nd.empty(data_2_tvm.shape, dtype=data_2_tvm.dtype, device=dev)
-        if name in ["hilbert"]:
+        if name in ["fft", "hilbert"]:
             out_2_tvm_2 = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
             execution_times_2 = timeit.repeat(
                 "op.transform(data_2_tvm, out_2_tvm, out_2_tvm_2)",

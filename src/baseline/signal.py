@@ -1,10 +1,23 @@
 try:
     import cupyx.scipy.signal as cusignal
+    import cupy.fft as cufft
 except:
     pass
 import scipy.signal as signal
+import scipy.fft as fft
 
 from dasf.transforms import Transform
+
+
+class FFT(Transform):
+    def _transform(self, X, xp):
+        return xp.fft(X, axis=-1)
+
+    def _transform_cpu(self, X):
+        return self._transform(X, fft)
+
+    def _transform_gpu(self, X):
+        return self._transform(X, cufft)
 
 
 class Convolve1D(Transform):

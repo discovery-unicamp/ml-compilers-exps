@@ -11,6 +11,7 @@ from tvm_te_operators.operator_generic import TVMOperator
 from dasf_seismic.attributes.complex_trace import *
 from dasf_seismic.attributes.texture import *
 from baseline.signal import (
+    FFT,
     Convolve1D,
     Convolve2D,
     Convolve3D,
@@ -21,6 +22,7 @@ from baseline.signal import (
 from utils import extract_data, extract_data_tvm, weights, weights_tvm
 
 operators = {
+    "fft": FFT,
     # "envelope": Envelope,
     # "inst-phase": InstantaneousPhase,
     # "cos-inst-phase": CosineInstantaneousPhase,
@@ -42,15 +44,15 @@ operators = {
     # "correlate2d": Correlate2D,
     # "convolve3d": Convolve3D,
     # "correlate3d": Correlate3D,
-    "glcm-asm": GLCMASM,
-    "glcm-contrast": GLCMContrast,
+    # "glcm-asm": GLCMASM,
+    # "glcm-contrast": GLCMContrast,
     # "glcm-correlation": GLCMCorrelation,
-    "glcm-variance": GLCMVariance,
+    # "glcm-variance": GLCMVariance,
     # "glcm-energy": GLCMEnergy,
     # "glcm-entropy": GLCMEntropy,
-    "glcm-mean": GLCMMean,
-    "glcm-std": GLCMStandardDeviation,
-    "glcm-dissimilarity": GLCMDissimilarity,
+    # "glcm-mean": GLCMMean,
+    # "glcm-std": GLCMStandardDeviation,
+    # "glcm-dissimilarity": GLCMDissimilarity,
     # "glcm-homogeneity": GLCMHomogeneity,
 }
 
@@ -139,14 +141,24 @@ def validate(args):
                     out_tvm = tvm.nd.empty(
                         data_tvm.shape, dtype=data_tvm.dtype, device=dev
                     )
-                    op_tvm.transform(data_tvm, out_tvm)
+                    if op == "fft":
+                        out_tvm_2 = tvm.nd.empty(
+                            data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                        )
+                        op_tvm.transform(data_tvm, out_tvm, out_tvm_2)
+                    else:
+                        op_tvm.transform(data_tvm, out_tvm)
                     if "glcm" in op:  # GLCM baseline on CPU is too slow
                         import cupy as cp
 
                         res_base = op_base._transform_gpu(cp.array(data)).get()
                     else:
                         res_base = op_base._transform_cpu(data)
-                err = np.abs(out_tvm.numpy() - res_base)
+                if op == "fft": # FFT produces complex number
+                    out = out_tvm.numpy() + 1j*out_tvm_2.numpy()
+                else:
+                    out = out_tvm.numpy()
+                err = np.abs(out - res_base)
                 err_rel = np.abs(err / res_base)
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))
             with open(args.file, "a") as f:
@@ -189,9 +201,19 @@ def validate(args):
                         data_tvm.shape, dtype=data_tvm.dtype, device=dev
                     )
                     data = cp.asarray(data)
-                    op_tvm.transform(data_tvm, out_tvm)
+                    if op == "fft":
+                        out_tvm_2 = tvm.nd.empty(
+                            data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                        )
+                        op_tvm.transform(data_tvm, out_tvm, out_tvm_2)
+                    else:
+                        op_tvm.transform(data_tvm, out_tvm)
                     res_base = op_base._transform_gpu(data)
-                err = np.abs(out_tvm.numpy() - res_base.get())
+                if op == "fft": # FFT produces complex number
+                    out = out_tvm.numpy() + 1j*out_tvm_2.numpy()
+                else:
+                    out = out_tvm.numpy()
+                err = np.abs(out - res_base.get())
                 err_rel = np.abs(err / res_base.get())
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))
             with open(args.file, "a") as f:

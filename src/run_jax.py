@@ -16,6 +16,7 @@ from jax_operators.operator_generic import JAXOperator
 from utils import extract_data, weights
 
 attrs = [
+    "fft",
     # "hilbert",
     # "envelope",
     # "inst-phase",
@@ -38,15 +39,15 @@ attrs = [
     # "correlate2d",
     # "convolve3d",
     # "correlate3d",
-    "glcm-asm",
-    "glcm-contrast",
+    # "glcm-asm",
+    # "glcm-contrast",
     # "glcm-correlation",
-    "glcm-variance",
+    # "glcm-variance",
     # "glcm-energy",
     # "glcm-entropy",
-    "glcm-mean",
-    "glcm-std",
-    "glcm-dissimilarity",
+    # "glcm-mean",
+    # "glcm-std",
+    # "glcm-dissimilarity",
     # "glcm-homogeneity",
 ]
 

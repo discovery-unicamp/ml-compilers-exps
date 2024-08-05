@@ -1,6 +1,7 @@
 from jax import jit
 
 from .complex_trace import (
+    fft,
     hilbert,
     envelope,
     instantaneous_phase,
@@ -42,6 +43,7 @@ from .texture import (
 )
 
 operators = {
+    "fft": fft, 
     "hilbert": hilbert,
     "envelope": envelope,
     "inst-phase": instantaneous_phase,

@@ -47,6 +47,7 @@ from dasf_seismic.attributes.texture import (
 )
 
 from baseline.signal import (
+    FFT,
     Convolve1D,
     Convolve2D,
     Convolve3D,
@@ -58,6 +59,7 @@ from baseline.signal import (
 from utils import extract_data, weights
 
 attrs = {
+    "fft": FFT,
     # "hilbert": Hilbert,
     # "envelope": Envelope,
     # "inst-phase": InstantaneousPhase,
@@ -80,15 +82,15 @@ attrs = {
     # "correlate2d": Correlate2D,
     # "convolve3d": Convolve3D,
     # "correlate3d": Correlate3D,
-    "glcm-asm": GLCMASM,
-    "glcm-contrast": GLCMContrast,
+    # "glcm-asm": GLCMASM,
+    # "glcm-contrast": GLCMContrast,
     # "glcm-correlation": GLCMCorrelation,
-    "glcm-variance": GLCMVariance,
+    # "glcm-variance": GLCMVariance,
     # "glcm-energy": GLCMEnergy,
     # "glcm-entropy": GLCMEntropy,
-    "glcm-mean": GLCMMean,
-    "glcm-std": GLCMStandardDeviation,
-    "glcm-dissimilarity": GLCMDissimilarity,
+    # "glcm-mean": GLCMMean,
+    # "glcm-std": GLCMStandardDeviation,
+    # "glcm-dissimilarity": GLCMDissimilarity,
     # "glcm-homogeneity": GLCMHomogeneity,
 }
 
