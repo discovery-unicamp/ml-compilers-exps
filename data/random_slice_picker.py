@@ -11,6 +11,8 @@ def picker(args):
         shape = dataset_info["shape"]
         slices = dataset_info["slices"].keys()
         for sli in slices:
+            if len(dataset_info["slices"][sli]) != 0:
+                continue 
             samples = []
             sli_size = list(map(int, sli.split("-")))
             assert len(shape) == len(sli_size)
