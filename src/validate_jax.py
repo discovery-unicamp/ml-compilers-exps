@@ -21,17 +21,17 @@ from baseline.signal import (
     Correlate2D,
     Correlate3D,
 )
-from utils import extract_data, weights
+from utils import extract_data, weights, check_attr_dataset_match
 
 operators = {
     "fft": FFT,
-    # "envelope": Envelope,
-    # "inst-phase": InstantaneousPhase,
-    # "cos-inst-phase": CosineInstantaneousPhase,
-    # "relative-amplitude-change": RelativeAmplitudeChange,
-    # "amplitude-acceleration": AmplitudeAcceleration,
-    # # "inst-frequency": InstantaneousFrequency,
-    # "inst-bandwidth": InstantaneousBandwidth,
+    "envelope": Envelope,
+    "inst-phase": InstantaneousPhase,
+    "cos-inst-phase": CosineInstantaneousPhase,
+    "relative-amplitude-change": RelativeAmplitudeChange,
+    "amplitude-acceleration": AmplitudeAcceleration,
+    # "inst-frequency": InstantaneousFrequency,
+    "inst-bandwidth": InstantaneousBandwidth,
     # "dominant-frequency": DominantFrequency,
     # "frequency-change": FrequencyChange,
     # "sweetness": Sweetness,
@@ -40,22 +40,22 @@ operators = {
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
-    # "convolve1d": Convolve1D,
+    "convolve1d": Convolve1D,
     # "correlate1d": Correlate1D,
-    # "convolve2d": Convolve2D,
+    "convolve2d": Convolve2D,
     # "correlate2d": Correlate2D,
-    # "convolve3d": Convolve3D,
+    "convolve3d": Convolve3D,
     # "correlate3d": Correlate3D,
-    # "glcm-asm": GLCMASM,
-    # "glcm-contrast": GLCMContrast,
+    "glcm-asm": GLCMASM,
+    "glcm-contrast": GLCMContrast,
     # "glcm-correlation": GLCMCorrelation,
-    # "glcm-variance": GLCMVariance,
-    # "glcm-energy": GLCMEnergy,
-    # "glcm-entropy": GLCMEntropy,
-    # "glcm-mean": GLCMMean,
-    # "glcm-std": GLCMStandardDeviation,
-    # "glcm-dissimilarity": GLCMDissimilarity,
-    # "glcm-homogeneity": GLCMHomogeneity,
+    "glcm-variance": GLCMVariance,
+    "glcm-energy": GLCMEnergy,
+    "glcm-entropy": GLCMEntropy,
+    "glcm-mean": GLCMMean,
+    "glcm-std": GLCMStandardDeviation,
+    "glcm-dissimilarity": GLCMDissimilarity,
+    "glcm-homogeneity": GLCMHomogeneity,
 }
 
 
@@ -88,6 +88,8 @@ def validate(args):
             op_base = operators[op]()
             header_op(op, args.file)
             for sh in sorted(glob(dataset_base)):
+                if not check_attr_dataset_match(op, sh.split("/")[-1]):
+                    continue
                 results = {"float32": [], "float64": []}
                 for dataset in sorted(glob(os.path.join(sh, "*"))):
                     for dtype in results.keys():
@@ -136,6 +138,8 @@ def validate(args):
             op_base = operators[op]()
             header_op(op, args.file)
             for sh in sorted(glob(dataset_base)):
+                if not check_attr_dataset_match(op, sh.split("/")[-1]):
+                    continue
                 results = {"float32": [], "float64": []}
                 for dataset in sorted(glob(os.path.join(sh, "*"))):
                     for dtype in results.keys():

@@ -170,16 +170,6 @@ def build_module(args):
         schedule = te.create_schedule(
             [res.op for res in operator.computation_context["result"]]
         )
-        print(
-            tvm.lower(
-                schedule,
-                [
-                    *operator.computation_context["input"],
-                    *operator.computation_context["result"],
-                ],
-                simple_mode=True,
-            )
-        )
         build = tvm.build(
             schedule,
             [

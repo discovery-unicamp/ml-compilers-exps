@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import subprocess
+from src.utils import check_attr_dataset_match
 
 schedules = {
     "default": 0,
@@ -13,39 +14,39 @@ schedules = {
 
 attr_list = [
     "fft",
-    # # "ifft",
-    # # "hilbert",
-    # "envelope",
-    # "inst-phase",
-    # "cos-inst-phase",
-    # "relative-amplitude-change",
-    # "amplitude-acceleration",
-    # # "inst-frequency",
-    # "inst-bandwidth",
-    # # "dominant-frequency",
-    # # "frequency-change",
-    # # "sweetness",
-    # # "quality-factor",
-    # # "response-phase",
-    # # "response-frequency",
-    # # "response-amplitude",
-    # # "apparent-polarity",
-    # "convolve1d",
+    # "ifft",
+    # "hilbert",
+    "envelope",
+    "inst-phase",
+    "cos-inst-phase",
+    "relative-amplitude-change",
+    "amplitude-acceleration",
+    # "inst-frequency",
+    "inst-bandwidth",
+    # "dominant-frequency",
+    # "frequency-change",
+    # "sweetness",
+    # "quality-factor",
+    # "response-phase",
+    # "response-frequency",
+    # "response-amplitude",
+    # "apparent-polarity",
+    "convolve1d",
     # "correlate1d",
-    # "convolve2d",
+    "convolve2d",
     # "correlate2d",
-    # "convolve3d",
+    "convolve3d",
     # "correlate3d",
-    # "glcm-asm",
-    # "glcm-contrast",
+    "glcm-asm",
+    "glcm-contrast",
     # "glcm-correlation",
-    # "glcm-variance",
-    # "glcm-energy",
-    # "glcm-entropy",
-    # "glcm-mean",
-    # "glcm-std",
-    # "glcm-dissimilarity",
-    # "glcm-homogeneity"
+    "glcm-variance",
+    "glcm-energy",
+    "glcm-entropy",
+    "glcm-mean",
+    "glcm-std",
+    "glcm-dissimilarity",
+    "glcm-homogeneity"
 ]
 
 
@@ -96,6 +97,8 @@ def build_modules(args):
     x, y, z = scope["data_size"].split("-")
 
     for attr in attr_list:
+        if not check_attr_dataset_match(attr, scope["data_size"]):
+            continue
         for arch in arch_list:
             process = subprocess.run(
                 [

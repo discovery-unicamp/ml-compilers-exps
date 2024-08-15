@@ -56,18 +56,18 @@ from baseline.signal import (
     Correlate3D,
 )
 
-from utils import extract_data, weights
+from utils import extract_data, weights, check_attr_dataset_match
 
 attrs = {
     "fft": FFT,
-    # "hilbert": Hilbert,
-    # "envelope": Envelope,
-    # "inst-phase": InstantaneousPhase,
-    # "cos-inst-phase": CosineInstantaneousPhase,
-    # "relative-amplitude-change": RelativeAmplitudeChange,
-    # "amplitude-acceleration": AmplitudeAcceleration,
+    "hilbert": Hilbert,
+    "envelope": Envelope,
+    "inst-phase": InstantaneousPhase,
+    "cos-inst-phase": CosineInstantaneousPhase,
+    "relative-amplitude-change": RelativeAmplitudeChange,
+    "amplitude-acceleration": AmplitudeAcceleration,
     # "inst-frequency": InstantaneousFrequency,
-    # "inst-bandwidth": InstantaneousBandwidth,
+    "inst-bandwidth": InstantaneousBandwidth,
     # "dominant-frequency": DominantFrequency,
     # "frequency-change": FrequencyChange,
     # "sweetness": Sweetness,
@@ -76,26 +76,28 @@ attrs = {
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
-    # "convolve1d": Convolve1D,
+    "convolve1d": Convolve1D,
     # "correlate1d": Correlate1D,
-    # "convolve2d": Convolve2D,
+    "convolve2d": Convolve2D,
     # "correlate2d": Correlate2D,
-    # "convolve3d": Convolve3D,
+    "convolve3d": Convolve3D,
     # "correlate3d": Correlate3D,
-    # "glcm-asm": GLCMASM,
-    # "glcm-contrast": GLCMContrast,
+    "glcm-asm": GLCMASM,
+    "glcm-contrast": GLCMContrast,
     # "glcm-correlation": GLCMCorrelation,
-    # "glcm-variance": GLCMVariance,
-    # "glcm-energy": GLCMEnergy,
-    # "glcm-entropy": GLCMEntropy,
-    # "glcm-mean": GLCMMean,
-    # "glcm-std": GLCMStandardDeviation,
-    # "glcm-dissimilarity": GLCMDissimilarity,
-    # "glcm-homogeneity": GLCMHomogeneity,
+    "glcm-variance": GLCMVariance,
+    "glcm-energy": GLCMEnergy,
+    "glcm-entropy": GLCMEntropy,
+    "glcm-mean": GLCMMean,
+    "glcm-std": GLCMStandardDeviation,
+    "glcm-dissimilarity": GLCMDissimilarity,
+    "glcm-homogeneity": GLCMHomogeneity,
 }
 
 
 def run_attr_op(args, name):
+    if not check_attr_dataset_match(name, args.dataset.split("/")[-2]):
+        return
     arch = "gpu" if args.baseline == "cupy" else "cpu"
     data_id = int(os.path.basename(args.dataset).split(".")[0])
     second_dataset = os.path.join(os.path.dirname(args.dataset), f"{data_id%5 + 1}.npy")

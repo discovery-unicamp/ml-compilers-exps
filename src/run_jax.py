@@ -13,18 +13,18 @@ import jax
 jax.config.update("jax_enable_x64", True)
 
 from jax_operators.operator_generic import JAXOperator
-from utils import extract_data, weights
+from utils import extract_data, weights, check_attr_dataset_match
 
 attrs = [
     "fft",
     # "hilbert",
-    # "envelope",
-    # "inst-phase",
-    # "cos-inst-phase",
-    # "relative-amplitude-change",
-    # "amplitude-acceleration",
+    "envelope",
+    "inst-phase",
+    "cos-inst-phase",
+    "relative-amplitude-change",
+    "amplitude-acceleration",
     # "inst-frequency",
-    # "inst-bandwidth",
+    "inst-bandwidth",
     # "dominant-frequency",
     # "frequency-change",
     # "sweetness",
@@ -33,26 +33,28 @@ attrs = [
     # "response-frequency",
     # "response-amplitude",
     # "apparent-polarity",
-    # "convolve1d",
+    "convolve1d",
     # "correlate1d",
-    # "convolve2d",
+    "convolve2d",
     # "correlate2d",
-    # "convolve3d",
+    "convolve3d",
     # "correlate3d",
-    # "glcm-asm",
-    # "glcm-contrast",
+    "glcm-asm",
+    "glcm-contrast",
     # "glcm-correlation",
-    # "glcm-variance",
-    # "glcm-energy",
-    # "glcm-entropy",
-    # "glcm-mean",
-    # "glcm-std",
-    # "glcm-dissimilarity",
-    # "glcm-homogeneity",
+    "glcm-variance",
+    "glcm-energy",
+    "glcm-entropy",
+    "glcm-mean",
+    "glcm-std",
+    "glcm-dissimilarity",
+    "glcm-homogeneity",
 ]
 
 
 def run_attr_op(args, name):
+    if not check_attr_dataset_match(name, args.dataset.split("/")[-2]):
+        return
     data_id = int(os.path.basename(args.dataset).split(".")[0])
     second_dataset = os.path.join(os.path.dirname(args.dataset), f"{data_id%5 + 1}.npy")
     try:
