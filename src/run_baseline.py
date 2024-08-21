@@ -96,7 +96,7 @@ attrs = {
 
 
 def run_attr_op(args, name):
-    if not check_attr_dataset_match(name, args.dataset.split("/")[-2]):
+    if not check_attr_dataset_match(name, args.dataset.parts[-2]):
         return
     arch = "gpu" if args.baseline == "cupy" else "cpu"
     data_id = int(os.path.basename(args.dataset).split(".")[0])

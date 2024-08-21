@@ -53,7 +53,7 @@ attrs = [
 
 
 def run_attr_op(args, name):
-    if not check_attr_dataset_match(name, args.dataset.split("/")[-2]):
+    if not check_attr_dataset_match(name, args.dataset.parts[-2]):
         return
     data_id = int(os.path.basename(args.dataset).split(".")[0])
     second_dataset = os.path.join(os.path.dirname(args.dataset), f"{data_id%5 + 1}.npy")
