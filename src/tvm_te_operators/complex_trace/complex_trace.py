@@ -269,7 +269,8 @@ class RelativeAmplitudeChange:
         )["result"][0]
 
         rac = te.compute(
-            (x, y, z), lambda i, j, k: te.div(env_prime[i, j, k], env[i, j, k])
+            (x, y, z), lambda i, j, k: te.div(env_prime[i, j, k], env[i, j, k]),
+            name=get_name("rac")
         )
         rac_clipped = te.compute(
             (x, y, z),
@@ -282,6 +283,7 @@ class RelativeAmplitudeChange:
                 ),
                 -1,
             ),
+            name=get_name("rac_clipped")
         )
         return (rac_clipped,)
 
@@ -407,6 +409,7 @@ class InstantaneousBandwidth:
         result = te.compute(
             (x, y, z),
             lambda i, j, k: te.div(te.abs(rac[i, j, k]), pi_const),
+            name=get_name("inst_bandwidth"),
         )
 
         return (result,)
@@ -449,7 +452,8 @@ class DominantFrequency:
         result = te.compute(
             (x, y, z),
             lambda i, j, k: te.sqrt(
-                te.power(freq[i, j, k], 2) + te.power(band[i, j, k], 2)
+                te.power(freq[i, j, k], 2) + te.power(band[i, j, k], 2),
+                name=get_name("dominat_frequency")
             ),
         )
 
@@ -534,10 +538,12 @@ class Sweetness:
                 5,
                 freq[i, j, k],
             ),
+            name=get_name("freq_limit")
         )
 
         result = te.compute(
-            (x, y, z), lambda i, j, k: te.div(env[i, j, k], freq_limit[i, j, k])
+            (x, y, z), lambda i, j, k: te.div(env[i, j, k], freq_limit[i, j, k]),
+            name=get_name("sweetnes")
         )
 
         return (result,)

@@ -2,9 +2,8 @@ import tvm.testing
 from tvm import te
 import numpy as np
 
-from tvm_te_operators.utils import (
-    get_name
-)
+from tvm_te_operators.utils import get_name
+
 
 class RecursiveGaussianFilter:
     def __init__(self, sigma, order=(1, 1, 1), computation_context={}):
@@ -334,9 +333,13 @@ class DericheFilter3D(DericheFilter):
 
     def _computation_kernel(self, X, x, y, z, order, n0, n1, n2, n3, d1, d2, d3, d4):
         # Forward sweep
-        f_sweep_state = te.placeholder((x, y, z), dtype=X.dtype, name=get_name("f_sweep_state"))
+        f_sweep_state = te.placeholder(
+            (x, y, z), dtype=X.dtype, name=get_name("f_sweep_state")
+        )
         f_sweep_init = te.compute(
-            (1, y, z), lambda _, j, k: n0 * X[0, j, k], name=get_name("foward_sweep_init")
+            (1, y, z),
+            lambda _, j, k: n0 * X[0, j, k],
+            name=get_name("foward_sweep_init"),
         )
 
         f_sweep_update = te.compute(
@@ -369,9 +372,9 @@ class DericheFilter3D(DericheFilter):
                         - d2 * f_sweep_state[i - 2, j, k],
                         n0 * X[i, j, k]
                         + n1 * X[i - 1, j, k]
-                        - d1 * f_sweep_state[i - 1, j, k]
-                    )
-                )
+                        - d1 * f_sweep_state[i - 1, j, k],
+                    ),
+                ),
             ),
             name=get_name("foward_sweep_update"),
         )
@@ -394,7 +397,9 @@ class DericheFilter3D(DericheFilter):
             n2 = -n2
             n3 = -n3
             n4 = -n4
-        r_sweep_state = te.placeholder((x, y, z), dtype=X.dtype, name=get_name("r_sweep_state"))
+        r_sweep_state = te.placeholder(
+            (x, y, z), dtype=X.dtype, name=get_name("r_sweep_state")
+        )
         r_sweep_init = te.compute(
             (1, y, z),
             lambda _, j, k: np.float64(0.0).astype(X.dtype),
@@ -405,7 +410,7 @@ class DericheFilter3D(DericheFilter):
             lambda i, j, k: te.if_then_else(
                 i >= 4,
                 n1 * X[x - (i + 1) + 1, j, k]
-                + n2 * X[x - (i + 1) + 2 , j, k]
+                + n2 * X[x - (i + 1) + 2, j, k]
                 + n3 * X[x - (i + 1) + 3, j, k]
                 + n4 * X[x - (i + 1) + 4, j, k]
                 - d1 * r_sweep_state[i - 1, j, k]
@@ -415,20 +420,19 @@ class DericheFilter3D(DericheFilter):
                 te.if_then_else(
                     i == 3,
                     n1 * X[x - (i + 1) + 1, j, k]
-                    + n2 * X[x - (i + 1) + 2 , j, k]
+                    + n2 * X[x - (i + 1) + 2, j, k]
                     + n3 * X[x - (i + 1) + 3, j, k]
                     - d1 * r_sweep_state[i - 1, j, k]
                     - d2 * r_sweep_state[i - 2, j, k]
                     - d3 * r_sweep_state[i - 3, j, k],
                     te.if_then_else(
-                    i == 2,
-                    n1 * X[x - (i + 1) + 1, j, k]
-                    + n2 * X[x - (i + 1) + 2 , j, k]
-                    - d1 * r_sweep_state[i - 1, j, k]
-                    - d2 * r_sweep_state[i - 2, j, k],
-                    n1 * X[x - (i + 1) + 1, j, k]
-                    - d1 * r_sweep_state[i - 1, j, k],
-                    )
+                        i == 2,
+                        n1 * X[x - (i + 1) + 1, j, k]
+                        + n2 * X[x - (i + 1) + 2, j, k]
+                        - d1 * r_sweep_state[i - 1, j, k]
+                        - d2 * r_sweep_state[i - 2, j, k],
+                        n1 * X[x - (i + 1) + 1, j, k] - d1 * r_sweep_state[i - 1, j, k],
+                    ),
                 ),
             ),
             name=get_name("reverse_sweep_update"),
@@ -471,5 +475,3 @@ class DericheFilter3D(DericheFilter):
         return self._computation_kernel(
             X, x, y, z, order, n0, n1, n2, n3, d1, d2, d3, d4
         )
-
-    
