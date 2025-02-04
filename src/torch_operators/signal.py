@@ -1,5 +1,4 @@
 import torch.nn.functional as F
-import warnings
 
 
 def convolve1d(arr, w):

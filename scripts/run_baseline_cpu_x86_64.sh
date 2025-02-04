@@ -7,15 +7,18 @@ DATASET=$3
 DTYPE=$4
 MAX_THREADS=$5
 
-echo "CPU baselines"
-eval "$(conda shell.bash hook)"
+# echo "CPU baselines"
+# eval "$(conda shell.bash hook)"
 
+export OMP_NUM_THREADS=$MAX_THREADS
+echo "OMP_NUM_THREADS set to ${OMP_NUM_THREADS}"
+python src/run_baseline.py --baseline $env --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE
 # intel_conda amd amd_gcc openblas
-for env in  default; do
-    echo "Running on ${env}"
-    conda deactivate
-    conda activate $env
-    export OMP_NUM_THREADS=$MAX_THREADS
-    echo "OMP_NUM_THREADS set to ${OMP_NUM_THREADS}"
-    python src/run_baseline.py --baseline $env --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE
-done
+# for env in  default; do
+#     echo "Running on ${env}"
+#     conda deactivate
+#     conda activate $env
+#     export OMP_NUM_THREADS=$MAX_THREADS
+#     echo "OMP_NUM_THREADS set to ${OMP_NUM_THREADS}"
+#     python src/run_baseline.py --baseline $env --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE
+# done

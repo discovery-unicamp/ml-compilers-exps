@@ -8,6 +8,6 @@ DTYPE=$4
 
 echo "Running GPU Torch operators"
 
-eval "$(conda shell.bash hook)"
-conda deactivate
+# eval "$(conda shell.bash hook)"
+# conda deactivate
 python src/run_torch.py --arch gpu --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE

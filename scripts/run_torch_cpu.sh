@@ -9,8 +9,8 @@ MAX_THREADS=$5
 
 echo "Running CPU Torch operators"
 
-eval "$(conda shell.bash hook)"
-conda deactivate
+# eval "$(conda shell.bash hook)"
+# conda deactivate
 
 export OMP_NUM_THREADS=$MAX_THREADS
 echo "OMP_NUM_THREADS set to ${OMP_NUM_THREADS}"

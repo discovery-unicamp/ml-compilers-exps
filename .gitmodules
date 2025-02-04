@@ -1,9 +1,6 @@
 [submodule "dasf-core"]
 	path = dasf-core
 	url = git@github.com:discovery-unicamp/dasf-core.git
-[submodule "glcm-cupy"]
-	path = glcm-cupy
-	url = https://github.com/SerodioJ/glcm-cupy.git
 [submodule "dasf-seismic"]
 	path = dasf-seismic
 	url = git@github.com:discovery-unicamp/dasf-seismic-private.git

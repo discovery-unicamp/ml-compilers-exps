@@ -42,6 +42,14 @@
             "sketch_policy": {
                 "sample_init_min_population": 1
             }
+        },
+        {
+            "tune_options": {
+                "num_measure_trials": 10000
+            },
+            "sketch_policy": {
+                "sample_init_min_population": 1
+            }
         }
     ]
 }

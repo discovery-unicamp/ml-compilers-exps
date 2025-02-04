@@ -109,6 +109,7 @@ def validate(args):
                             else:
                                 res_base = op_base._transform_cpu(data)
                         err = np.abs(res_torch - res_base)
+                        res_base[res_base == 0] = 1 # err_rel computation retain abs err
                         err_rel = np.abs(err / res_base)
                         results[dtype].append(
                             (err.mean(), err.std(), err.max(), err_rel.max())
@@ -144,14 +145,15 @@ def validate(args):
                             weight_torch = torch.from_numpy(weight).to(torch.device("cuda"))
                             data = cp.asarray(data)
                             weight = cp.asarray(weight)
-                            res_torch = op_torch._transform_gpu(data_torch, weight_torch).cpu().numpy()
+                            res_torch = op_torch._transform_gpu(data_torch, weight_torch)
                             res_base = op_base._transform_gpu(data, weight)
                         else:
                             data_torch = torch.from_numpy(data).to(torch.device("cuda"))
                             data = cp.asarray(data)
-                            res_torch = op_torch._transform_gpu(data_torch).cpu().numpy()
+                            res_torch = op_torch._transform_gpu(data_torch)
                             res_base = op_base._transform_gpu(data)
                         err = cp.abs(res_torch - res_base)
+                        res_base[res_base == 0] = 1 # err_rel computation retain abs err
                         err_rel = cp.abs(err / res_base)
                         results[dtype].append(
                             (err.mean(), err.std(), err.max(), err_rel.max())

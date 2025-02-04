@@ -60,7 +60,7 @@ def build_modules(args):
         )
         scope = scope[exp_id]
     build_index = os.path.join(
-        os.getcwd(), "experiments", "modules", exp_id, "index.json"
+        os.getcwd(), "experiments", "modules_1", exp_id, "index.json"
     )
 
     build_specs = ""
@@ -90,7 +90,7 @@ def build_modules(args):
         with open(build_index, "w") as f:
             json.dump({curr_run: build_specs}, f, indent=4)
     build_folder = os.path.join(
-        os.getcwd(), "experiments", "modules", exp_id, f"Build{curr_run:02d}"
+        os.getcwd(), "experiments", "modules_1", exp_id, f"Build{curr_run:02d}"
     )
     os.mkdir(build_folder)
     os.mkdir(os.path.join(build_folder, "logs"))
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         "--file",
         help="Experiment Index JSON file path",
         type=Path,
-        default=os.path.join("experiments", "experiment_index.json"),
+        default=os.path.join("experiments", "index.json"),
     )
 
     parser.add_argument(

@@ -18,51 +18,59 @@ def get_git_revision_hash():
     )  # bypass git repo ownership that leads to a problem when running inside a Docker container
     return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii").strip()
 
+def check_machine_id(name):
+    with open(os.path.join("experiments", "machine_index.json"), "r") as f:
+        index = json.load(f)
+        for i, item in enumerate(index):
+            if name == item["CPU"]["name"]:
+                return i
+    raise RuntimeError("Unknown machine! Please register it on the machine index.")
 
 def generate_experiment_scope(args):
     exp_dict = {}
     exp_id = str(uuid4())
     if args.cpu:
         info = cpuinfo.get_cpu_info()
-        exp_dict["CPU"] = {
-            "name": info.get("brand_raw"),
-            "physical_cores": psutil.cpu_count(logical=False),
-            "logical_cores": psutil.cpu_count(logical=True),
-            "min_freq": psutil.cpu_freq().min,
-            "max_freq": psutil.cpu_freq().max,
-            "l1_data_cache_size": info.get("l1_data_cache_size"),
-            "l1_instruction_cache_size": info.get("l1_instruction_cache_size"),
-            "l2_cache_size": info.get("l2_cache_size"),
-            "l2_cache_line_size": info.get("l2_cache_line_size"),
-            "l2_cache_associativity": info.get("l2_cache_associativity"),
-            "l3_cache_size": info.get("l3_cache_size"),
-            "arch": platform.processor(),
-            "memory": psutil.virtual_memory().total,
-            "flags": info.get("flags"),
-        }
-    if args.gpu:
-        from GPUtil import getGPUs
+        exp_dict["machine"] = check_machine_id(info.get("brand_raw"))
+        # exp_dict["CPU"] = {
+        #     "name": info.get("brand_raw"),
+        #     "physical_cores": psutil.cpu_count(logical=False),
+        #     "logical_cores": psutil.cpu_count(logical=True),
+        #     "min_freq": psutil.cpu_freq().min,
+        #     "max_freq": psutil.cpu_freq().max,
+        #     "l1_data_cache_size": info.get("l1_data_cache_size"),
+        #     "l1_instruction_cache_size": info.get("l1_instruction_cache_size"),
+        #     "l2_cache_size": info.get("l2_cache_size"),
+        #     "l2_cache_line_size": info.get("l2_cache_line_size"),
+        #     "l2_cache_associativity": info.get("l2_cache_associativity"),
+        #     "l3_cache_size": info.get("l3_cache_size"),
+        #     "arch": platform.processor(),
+        #     "memory": psutil.virtual_memory().total,
+        #     "flags": info.get("flags"),
+        # }
+    # if args.gpu:
+        # from GPUtil import getGPUs
 
-        gpus = getGPUs()
-        exp_dict["GPU"] = [
-            {
-                "name": gpu.name,
-                "driver": gpu.driver,
-                "memory": gpu.memoryTotal,
-                "id": gpu.id,
-            }
-            for gpu in gpus
-        ]
+        # gpus = getGPUs()
+        # exp_dict["GPU"] = [
+        #     {
+        #         "name": gpu.name,
+        #         "driver": gpu.driver,
+        #         "memory": gpu.memoryTotal,
+        #         "id": gpu.id,
+        #     }
+        #     for gpu in gpus
+        # ]
     exp_dict["data_size"] = args.size
     exp_dict["dtype"] = args.dtype
     exp_dict["commit_hash"] = get_git_revision_hash()
     exp_dict["creation_time"] = (
-        datetime.utcnow().replace(tzinfo=pytz.utc).strftime("%d/%m/%Y %H:%M:%S-%Z")
+        datetime.now(datetime.UTC).replace(tzinfo=pytz.utc).strftime("%d/%m/%Y %H:%M:%S-%Z")
     )
     exp_dict["tag"] = exp_dict["commit_hash"] if args.tag is None else args.tag
 
     file = (
-        os.path.join("experiments", "experiment_index.json")
+        os.path.join("experiments", "index.json")
         if args.file is None
         else args.file
     )
@@ -78,8 +86,8 @@ def generate_experiment_scope(args):
         with open(file, "w") as f:
             json.dump({exp_id: exp_dict}, f, indent=4)
 
-    os.makedirs(os.path.join("experiments", "modules", exp_id))
-    os.makedirs(os.path.join("experiments", "results", exp_id))
+    os.makedirs(os.path.join("experiments", "modules_1", exp_id))
+    os.makedirs(os.path.join("experiments", "results_1", exp_id))
 
 
 if __name__ == "__main__":

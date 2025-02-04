@@ -8,10 +8,9 @@ def fft(X):
 
 
 def hilbert(X):
-    torch._inductor.config.triton.unique_kernel_names = True
     _, _, z = X.shape
     freq = torch.fft.fft(X, dim=-1)
-    h = torch.zeros((z,), dtype=X.dtype)    
+    h = X.new_zeros((z,), dtype=X.dtype)    
     if z % 2 == 0:
         h[0] = 1
         h[z // 2] = 1

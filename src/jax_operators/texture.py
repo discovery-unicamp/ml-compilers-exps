@@ -81,7 +81,7 @@ def glcm_base(X, levels=16, direction=1, window_size=7):
     elif direction == 3:
         f = jax.vmap(glcm_compute_D3, in_axes=0)
     n_windows = windows.shape[0]
-    windows_split = jnp.array_split(windows, n_windows // 4096)
+    windows_split = jnp.array_split(windows, n_windows // 32768)
     windows_split = jnp.array(windows_split)
     return jax.lax.map(f, windows_split).reshape(*X.shape, levels, levels)
 

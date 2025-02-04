@@ -117,6 +117,7 @@ def validate(args):
                             else:
                                 res_base = op_base._transform_cpu(data)
                         err = np.abs(res_jax - res_base)
+                        res_base[res_base == 0] = 1 # err_rel computation retain abs err
                         err_rel = np.abs(err / res_base)
                         results[dtype].append(
                             (err.mean(), err.std(), err.max(), err_rel.max())
@@ -165,6 +166,7 @@ def validate(args):
                             res_jax = op_jax._transform_gpu(data_jax)
                             res_base = op_base._transform_gpu(data)
                         err = cp.abs(res_jax - res_base)
+                        res_base[res_base == 0] = 1 # err_rel computation retain abs err
                         err_rel = cp.abs(err / res_base)
                         results[dtype].append(
                             (err.mean(), err.std(), err.max(), err_rel.max())

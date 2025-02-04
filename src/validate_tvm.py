@@ -159,6 +159,7 @@ def validate(args):
                 else:
                     out = out_tvm.numpy()
                 err = np.abs(out - res_base)
+                res_base[res_base == 0] = 1 # err_rel computation retain abs err
                 err_rel = np.abs(err / res_base)
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))
             with open(args.file, "a") as f:
@@ -214,6 +215,7 @@ def validate(args):
                 else:
                     out = out_tvm.numpy()
                 err = np.abs(out - res_base.get())
+                res_base[res_base == 0] = 1 # err_rel computation retain abs err
                 err_rel = np.abs(err / res_base.get())
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))
             with open(args.file, "a") as f:

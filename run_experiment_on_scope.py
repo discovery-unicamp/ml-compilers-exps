@@ -17,7 +17,7 @@ def run_experiments(args):
         )
         scope = scope[exp_id]
     run_index = os.path.join(
-        os.getcwd(), "experiments", "results", exp_id, "index.json"
+        os.getcwd(), "experiments", "results_1", exp_id, "index.json"
     )
     run_specs = {
         "CPU": args.cpu and "CPU" in scope,
@@ -42,7 +42,7 @@ def run_experiments(args):
             json.dump({curr_run: run_specs}, f, indent=4)
 
     csv_file = os.path.join(
-        os.getcwd(), "experiments", "results", exp_id, f"Run{curr_run:02d}.csv"
+        os.getcwd(), "experiments", "results_1", exp_id, f"Run{curr_run:02d}.csv"
     )
     with open(csv_file, "w") as f:
         writer = csv.writer(f)
@@ -58,7 +58,7 @@ def run_experiments(args):
     base_path = ""
     if args.tvm != None:
         base_path = os.path.join(
-            os.getcwd(), "experiments", "modules", exp_id, f"Build{args.tvm:02d}"
+            os.getcwd(), "experiments", "modules_1", exp_id, f"Build{args.tvm:02d}"
         )
 
     if run_specs["CPU"]:
