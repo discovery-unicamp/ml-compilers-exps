@@ -4,12 +4,11 @@ import subprocess
 from glob import glob
 
 import numpy as np
-import jax
+import torch
 
-jax.config.update("jax_enable_x64", True)
 
 from pathlib import Path
-from jax_operators.operator_generic import JAXOperator
+from torch_operators.operator_generic import TorchOperator
 from dasf_seismic.attributes.complex_trace import *
 from dasf_seismic.attributes.texture import *
 from baseline.signal import (
@@ -77,46 +76,39 @@ def header_op(op, filepath):
 
 
 def validate(args):
-    os.environ["XLA_PYTHON_CLIENT_MEM_FRACTION"] = ".25"
     with open(args.file, "w") as f:
         f.write(f"GIT HASH: {get_git_revision_hash()}\n")
     dataset_base = os.path.join("data", args.dataset, "*")
     if args.cpu:
         header_arch("CPU", args.file)
         for op in operators.keys():
-            op_jax = JAXOperator(op)
             op_base = operators[op]()
             header_op(op, args.file)
             for sh in sorted(glob(dataset_base)):
                 if not check_attr_dataset_match(op, sh.split("/")[-1]):
                     continue
                 results = {"float32": [], "float64": []}
-                for dataset in sorted(glob(os.path.join(sh, "*"))):
-                    for dtype in results.keys():
+                for dtype in results.keys():
+                    op_torch = TorchOperator(op) # Torch operator needs to have compiler cache reset
+                    for dataset in sorted(glob(os.path.join(sh, "*"))):
                         data = np.load(dataset).astype(dtype)
                         if "convolve" in op or "correlate" in op:
                             data = extract_data(data, op)
                             weight = weights[op[-2:]].astype(dtype)
-                            data_jax = jax.device_put(
-                                data, device=jax.devices("cpu")[0]
-                            )
-                            weight_jax = jax.device_put(
-                                weight, device=jax.devices("cpu")[0]
-                            )
-                            res_jax = op_jax._transform_cpu(data_jax, weight_jax)
+                            data_torch = torch.from_numpy(data).to(torch.device("cpu"))
+                            weight_torch = torch.from_numpy(weight).to(torch.device("cpu"))
+                            res_torch = op_torch._transform_cpu(data_torch, weight_torch).numpy()
                             res_base = op_base._transform_cpu(data, weight)
                         else:
-                            data_jax = jax.device_put(
-                                data, device=jax.devices("cpu")[0]
-                            )
-                            res_jax = op_jax._transform_cpu(data_jax)
+                            data_torch = torch.from_numpy(data).to(torch.device("cpu"))
+                            res_torch = op_torch._transform_cpu(data_torch).numpy()
                             if "glcm" in op:  # GLCM baseline on CPU is too slow
                                 import cupy as cp
 
                                 res_base = op_base._transform_gpu(cp.array(data)).get()
                             else:
                                 res_base = op_base._transform_cpu(data)
-                        err = np.abs(res_jax - res_base)
+                        err = np.abs(res_torch - res_base)
                         err_rel = np.abs(err / res_base)
                         results[dtype].append(
                             (err.mean(), err.std(), err.max(), err_rel.max())
@@ -134,37 +126,32 @@ def validate(args):
 
         header_arch("GPU", args.file)
         for op in operators.keys():
-            op_jax = JAXOperator(op)
+            op_torch = TorchOperator(op)
             op_base = operators[op]()
             header_op(op, args.file)
             for sh in sorted(glob(dataset_base)):
                 if not check_attr_dataset_match(op, sh.split("/")[-1]):
                     continue
                 results = {"float32": [], "float64": []}
-                for dataset in sorted(glob(os.path.join(sh, "*"))):
-                    for dtype in results.keys():
+                for dtype in results.keys():
+                    op_torch = TorchOperator(op) # Torch operator needs to have compiler cache reset
+                    for dataset in sorted(glob(os.path.join(sh, "*"))):
                         data = np.load(dataset).astype(dtype)
                         if "convolve" in op or "correlate" in op:
                             data = extract_data(data, op)
                             weight = weights[op[-2:]].astype(dtype)
-                            data_jax = jax.device_put(
-                                data, device=jax.devices("gpu")[0]
-                            )
-                            weight_jax = jax.device_put(
-                                weight, device=jax.devices("gpu")[0]
-                            )
+                            data_torch = torch.from_numpy(data).to(torch.device("cuda"))
+                            weight_torch = torch.from_numpy(weight).to(torch.device("cuda"))
                             data = cp.asarray(data)
                             weight = cp.asarray(weight)
-                            res_jax = op_jax._transform_gpu(data_jax, weight_jax)
+                            res_torch = op_torch._transform_gpu(data_torch, weight_torch).cpu().numpy()
                             res_base = op_base._transform_gpu(data, weight)
                         else:
-                            data_jax = jax.device_put(
-                                data, device=jax.devices("gpu")[0]
-                            )
+                            data_torch = torch.from_numpy(data).to(torch.device("cuda"))
                             data = cp.asarray(data)
-                            res_jax = op_jax._transform_gpu(data_jax)
+                            res_torch = op_torch._transform_gpu(data_torch).cpu().numpy()
                             res_base = op_base._transform_gpu(data)
-                        err = cp.abs(res_jax - res_base)
+                        err = cp.abs(res_torch - res_base)
                         err_rel = cp.abs(err / res_base)
                         results[dtype].append(
                             (err.mean(), err.std(), err.max(), err_rel.max())
