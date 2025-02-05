@@ -65,11 +65,11 @@ def build_modules(args):
 
     build_specs = ""
     arch_list = []
-    if args.cpu != -1 and "CPU" in scope:
+    if args.cpu != -1:
         build_specs += f"cpu-{args.cpu}_"
         arch_list.append("cpu")
     if (
-        args.gpu != -1 and "GPU" in scope and args.scheduler != "default"
+        args.gpu != -1 and args.scheduler != "default"
     ):  # CUDA has no default schedule
         build_specs += f"gpu-{args.gpu}_"
         arch_list.append("gpu")

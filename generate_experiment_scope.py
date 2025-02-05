@@ -5,7 +5,7 @@ import platform
 import psutil
 import pytz
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -65,7 +65,7 @@ def generate_experiment_scope(args):
     exp_dict["dtype"] = args.dtype
     exp_dict["commit_hash"] = get_git_revision_hash()
     exp_dict["creation_time"] = (
-        datetime.now(datetime.UTC).replace(tzinfo=pytz.utc).strftime("%d/%m/%Y %H:%M:%S-%Z")
+        datetime.now(timezone.utc).replace(tzinfo=pytz.utc).strftime("%d/%m/%Y %H:%M:%S-%Z")
     )
     exp_dict["tag"] = exp_dict["commit_hash"] if args.tag is None else args.tag
 
