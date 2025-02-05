@@ -6,7 +6,7 @@ dask-jobqueue==0.9.0
 dask_memusage==1.1
 Deprecated==1.2.18
 gdown==5.2.0
-glcm_cupy @ git+https://github.com/SerodioJ/glcm-cupy@master
+glcm_cupy @ git+https://github.com/SerodioJ/glcm-cupy@stable
 GPUtil==1.4.0
 graphviz==0.20.3
 imageio==2.37.0
