@@ -39,11 +39,11 @@ operators = {
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
     "convolve1d": Convolve1D,
-    # "correlate1d": Correlate1D,
+    "correlate1d": Correlate1D,
     "convolve2d": Convolve2D,
-    # "correlate2d": Correlate2D,
+    "correlate2d": Correlate2D,
     "convolve3d": Convolve3D,
-    # "correlate3d": Correlate3D,
+    "correlate3d": Correlate3D,
     "glcm-asm": GLCMASM,
     "glcm-contrast": GLCMContrast,
     # "glcm-correlation": GLCMCorrelation,
@@ -81,7 +81,7 @@ def validate(args):
         build_id = args.build
     else:
         with open(
-            os.path.join(os.getcwd(), "experiments", "modules", exp_id, "index.json")
+            os.path.join(os.getcwd(), "experiments", "modules_1", exp_id, "index.json")
         ) as f:
             index_build = json.load(f)
             build_id = int(list(index_build.keys())[-1])
@@ -90,7 +90,7 @@ def validate(args):
             os.path.join(
                 os.getcwd(),
                 "experiments",
-                "modules",
+                "modules_1",
                 exp_id,
                 f"Build{build_id:02d}",
                 "*_cpu.so",
@@ -100,7 +100,7 @@ def validate(args):
             os.path.join(
                 os.getcwd(),
                 "experiments",
-                "modules",
+                "modules_1",
                 exp_id,
                 f"Build{build_id:02d}",
                 "*_gpu.so",
@@ -233,7 +233,7 @@ if __name__ == "__main__":
         "--index",
         help="Experiment Index JSON file path",
         type=Path,
-        default=os.path.join("experiments", "experiment_index.json"),
+        default=os.path.join("experiments", "index.json"),
     )
 
     parser.add_argument(
