@@ -128,9 +128,12 @@ def build_module(args):
     with open(args.profiles, "r") as f:
         profiles = json.load(f)
 
-    tgt = tvm.target.Target(
-        target=profiles[args.arch][build_profile[args.arch]], host="llvm"
-    )
+    if args.target is not None:
+        tgt = tvm.target.Target(args.target)
+    else:
+        tgt = tvm.target.Target(
+            target=profiles[args.arch][build_profile[args.arch]], host="llvm"
+        )
     start = perf_counter()
     name = f"{args.operator}_{args.arch}"
     x, y, z = args.x, args.y, args.z
@@ -285,6 +288,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "-b", "--build-path", help="path to build folder", type=Path, required=True
+    )
+
+    parser.add_argument(
+        "-t", "--target", help="TVM target string", default=None, type=str
     )
 
     abspath = os.path.abspath(__file__)

@@ -2,6 +2,7 @@
     {
         "CPU": {
             "name": "AMD Ryzen 5 5600H with Radeon Graphics",
+            "native_flag": "znver3",
             "physical_cores": 6,
             "logical_cores": 12,
             "min_freq": 1200.0,
@@ -173,6 +174,7 @@
     {
         "CPU": {
             "name": "AMD Ryzen 7 5700X 8-Core Processor",
+            "native_flag": "znver3",
             "physical_cores": 8,
             "logical_cores": 16,
             "min_freq": 2200.0,
@@ -344,6 +346,7 @@
     {
         "CPU": {
             "name": "Intel(R) Xeon(R) Silver 4310 CPU @ 2.10GHz",
+            "native_flag": "icelake-server",
             "physical_cores": 24,
             "logical_cores": 48,
             "min_freq": 800.0,
@@ -537,6 +540,7 @@
     {
         "CPU": {
             "name": "Intel(R) Xeon(R) Gold 6240 CPU @ 2.60GHz",
+            "native_flag": "cascadelake",
             "physical_cores": 36,
             "logical_cores": 72,
             "min_freq": 1000.0,

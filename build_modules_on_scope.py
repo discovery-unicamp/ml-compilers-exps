@@ -65,9 +65,23 @@ def build_modules(args):
 
     build_specs = ""
     arch_list = []
+    target = []
     if args.cpu != -1:
         build_specs += f"cpu-{args.cpu}_"
         arch_list.append("cpu")
+        if args.cpu == 2:
+            with open(os.path.join("experiments", "machine_index.json"), "r") as f:
+                index = json.load(f)
+                flag = index[scope["machine"]]["CPU"]["native_flag"]
+            target = [
+                "--target",
+                f"llvm -mcpu={flag}"
+            ]
+        elif args.cpu == 3:
+            target = [
+                "--target",
+                "llvm"
+            ]
     if (
         args.gpu != -1 and args.scheduler != "default"
     ):  # CUDA has no default schedule
@@ -122,6 +136,7 @@ def build_modules(args):
                     args.profiles,
                     "--build-path",
                     build_folder,
+                    *target
                 ],
                 capture_output=True,
             )
@@ -159,12 +174,14 @@ if __name__ == "__main__":
         "--cpu",
         help="CPU build profile, if set to -1, will be ignored. Check experiments/build_profiles.json",
         default=-1,
+        type=int
     )
     parser.add_argument(
         "-g",
         "--gpu",
         help="GPU build profile, if set to -1, will be ignored. Check experiments/build_profiles.json",
         default=-1,
+        type=int
     )
     parser.add_argument(
         "-s",
@@ -178,6 +195,7 @@ if __name__ == "__main__":
         "--ansor",
         help="Ansor schedule search policy, relevant only if Ansor is the selected scheduler. Check experiments/build_profiles.json",
         default=0,
+        type=int
     )
 
     parser.add_argument(
