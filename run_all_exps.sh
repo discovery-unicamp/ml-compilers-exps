@@ -25,7 +25,7 @@ for exp in "32-32-32" "64-64-64" "128-128-128"; do
     python generate_experiment_scope.py --file experiments/index.json --cpu --gpu --size $exp --dtype float32 --tag "${TAG_BASE} Conv/GLCM Float 32 Shape ${exp}"
 
     python build_modules_on_scope.py --cpu 2 --gpu 0  --scheduler ansor --ansor 1
-    python src/validate_tvm.py --cpu --file "validate_tvm_1000_${exp}_f32.txt"
+    python src/validate_tvm.py --cpu --gpu --file "validate_tvm_1000_${exp}_f32.txt"
     python build_modules_on_scope.py --cpu 3 --scheduler ansor --ansor 1
 
     python src/validate_tvm.py --cpu --file "validate_tvm_1000_${exp}_f32_default.txt"
