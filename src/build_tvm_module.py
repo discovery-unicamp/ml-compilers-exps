@@ -207,7 +207,10 @@ def build_module(args):
                 runner=measure_ctx.runner,
                 **ansor_config["tune_options"],
             )
-        s_p = auto_scheduler.SketchPolicy(task, params=ansor_config["sketch_policy"])
+        if build_profile.get("cost", 0) == 1: # use XGBoost model as cost model
+            s_p = auto_scheduler.SketchPolicy(task, program_cost_model=auto_scheduler.XGBModel(), params=ansor_config["sketch_policy"])
+        else:
+            s_p = auto_scheduler.SketchPolicy(task, params=ansor_config["sketch_policy"])
         task.tune(tune_option, search_policy=s_p)
         schedule, args_tvm = task.apply_best(log_file)
         build = tvm.build(schedule, args_tvm, tgt)

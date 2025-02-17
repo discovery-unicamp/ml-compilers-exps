@@ -91,6 +91,8 @@ def build_modules(args):
         build_specs += f"sch-{schedules[args.scheduler]}_ansor-{args.ansor}"
     else:
         build_specs += f"sch-{schedules[args.scheduler]}"
+    if args.xgboost_model:
+        build_specs += f"_cost-1"
 
     if os.path.isfile(build_index):
         with open(build_index, "r") as f:
@@ -204,6 +206,10 @@ if __name__ == "__main__":
         help="Experiment ID to use, if not set defaults to last on the file",
         type=str,
         default=None,
+    )
+
+    parser.add_argument(
+        "-b", "--xgboost-model", help="Use XGBoost model instead of Random cost model", action="store_true"
     )
 
     args = parser.parse_args()
