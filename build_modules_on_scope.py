@@ -116,6 +116,7 @@ def build_modules(args):
         if not check_attr_dataset_match(attr, scope["data_size"]):
             continue
         for arch in arch_list:
+            build_target = target if arch == "cpu" else []
             process = subprocess.run(
                 [
                     "python",
@@ -138,7 +139,7 @@ def build_modules(args):
                     args.profiles,
                     "--build-path",
                     build_folder,
-                    *target
+                    *build_target
                 ],
                 capture_output=True,
             )
