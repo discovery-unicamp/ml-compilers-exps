@@ -1,1 +1,82 @@
-{}
+{
+    "86a5cd98-a5e6-4853-b897-367eb2130662": {
+        "machine": 0,
+        "data_size": "64-64-256",
+        "dtype": "float64",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "17/02/2025 17:36:50-UTC",
+        "tag": "Laptop New Experiments Complex Trace Float 64 Shape 64-64-256"
+    },
+    "34d4d87d-5758-426c-b74f-c9c27196db69": {
+        "machine": 0,
+        "data_size": "64-64-512",
+        "dtype": "float64",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "18/02/2025 10:41:18-UTC",
+        "tag": "Laptop New Experiments Complex Trace Float 64 Shape 64-64-512"
+    },
+    "0dcfb50b-b734-4b26-8fdc-209605919700": {
+        "machine": 0,
+        "data_size": "128-128-512",
+        "dtype": "float64",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "19/02/2025 18:56:24-UTC",
+        "tag": "Laptop New Experiments Complex Trace Float 64 Shape 128-128-512"
+    },
+    "85058344-b454-4d46-b704-4ed48ce78013": {
+        "machine": 0,
+        "data_size": "128-128-1024",
+        "dtype": "float64",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "21/02/2025 18:34:27-UTC",
+        "tag": "Laptop New Experiments Complex Trace Float 64 Shape 128-128-1024"
+    },
+    "2e411343-f84e-4af0-8ce9-51877943cf4e": {
+        "machine": 0,
+        "data_size": "32-32-32",
+        "dtype": "float32",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "24/02/2025 01:40:56-UTC",
+        "tag": "Laptop New Experiments Conv/GLCM Float 32 Shape 32-32-32"
+    },
+    "bc64f7b1-8b79-41bd-9830-29eb060124c2": {
+        "machine": 0,
+        "data_size": "64-64-64",
+        "dtype": "float32",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "25/02/2025 16:16:07-UTC",
+        "tag": "Laptop New Experiments Conv/GLCM Float 32 Shape 64-64-64"
+    },
+    "71351e67-422c-4c10-acb1-36803ad724ae": {
+        "machine": 0,
+        "data_size": "128-128-128",
+        "dtype": "float32",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "01/03/2025 14:23:52-UTC",
+        "tag": "Laptop New Experiments Conv/GLCM Float 32 Shape 128-128-128"
+    },
+    "a8617832-4c4f-4549-af9f-5cbaec9968ba": {
+        "machine": 0,
+        "data_size": "32-32-32",
+        "dtype": "float64",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "05/03/2025 12:58:51-UTC",
+        "tag": "Laptop New Experiments Conv/GLCM Float 64 Shape 32-32-32"
+    },
+    "b922ef89-2c9f-435f-8da4-ad333ef89755": {
+        "machine": 0,
+        "data_size": "64-64-64",
+        "dtype": "float64",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "09/03/2025 02:45:27-UTC",
+        "tag": "Laptop New Experiments Conv/GLCM Float 64 Shape 64-64-64"
+    },
+    "bf317108-73db-4845-9520-f2066275d543": {
+        "machine": 0,
+        "data_size": "128-128-128",
+        "dtype": "float64",
+        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "creation_time": "11/03/2025 18:11:32-UTC",
+        "tag": "Laptop New Experiments Conv/GLCM Float 64 Shape 128-128-128"
+    }
+}
