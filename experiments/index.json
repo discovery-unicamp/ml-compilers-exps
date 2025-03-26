@@ -3,7 +3,7 @@
         "machine": 0,
         "data_size": "64-64-256",
         "dtype": "float64",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "17/02/2025 17:36:50-UTC",
         "tag": "Laptop New Experiments Complex Trace Float 64 Shape 64-64-256"
     },
@@ -11,7 +11,7 @@
         "machine": 0,
         "data_size": "64-64-512",
         "dtype": "float64",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "18/02/2025 10:41:18-UTC",
         "tag": "Laptop New Experiments Complex Trace Float 64 Shape 64-64-512"
     },
@@ -19,7 +19,7 @@
         "machine": 0,
         "data_size": "128-128-512",
         "dtype": "float64",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "19/02/2025 18:56:24-UTC",
         "tag": "Laptop New Experiments Complex Trace Float 64 Shape 128-128-512"
     },
@@ -27,7 +27,7 @@
         "machine": 0,
         "data_size": "128-128-1024",
         "dtype": "float64",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "21/02/2025 18:34:27-UTC",
         "tag": "Laptop New Experiments Complex Trace Float 64 Shape 128-128-1024"
     },
@@ -35,7 +35,7 @@
         "machine": 0,
         "data_size": "32-32-32",
         "dtype": "float32",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "24/02/2025 01:40:56-UTC",
         "tag": "Laptop New Experiments Conv/GLCM Float 32 Shape 32-32-32"
     },
@@ -43,7 +43,7 @@
         "machine": 0,
         "data_size": "64-64-64",
         "dtype": "float32",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "25/02/2025 16:16:07-UTC",
         "tag": "Laptop New Experiments Conv/GLCM Float 32 Shape 64-64-64"
     },
@@ -51,7 +51,7 @@
         "machine": 0,
         "data_size": "128-128-128",
         "dtype": "float32",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "01/03/2025 14:23:52-UTC",
         "tag": "Laptop New Experiments Conv/GLCM Float 32 Shape 128-128-128"
     },
@@ -59,7 +59,7 @@
         "machine": 0,
         "data_size": "32-32-32",
         "dtype": "float64",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "05/03/2025 12:58:51-UTC",
         "tag": "Laptop New Experiments Conv/GLCM Float 64 Shape 32-32-32"
     },
@@ -67,7 +67,7 @@
         "machine": 0,
         "data_size": "64-64-64",
         "dtype": "float64",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "09/03/2025 02:45:27-UTC",
         "tag": "Laptop New Experiments Conv/GLCM Float 64 Shape 64-64-64"
     },
@@ -75,8 +75,88 @@
         "machine": 0,
         "data_size": "128-128-128",
         "dtype": "float64",
-        "commit_hash": "cd60287511233becaf5aad4644559ade0fb98133",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "11/03/2025 18:11:32-UTC",
         "tag": "Laptop New Experiments Conv/GLCM Float 64 Shape 128-128-128"
+    },
+    "afe461aa-acb3-4f8e-a614-55f4b3ac3b26": {
+        "machine": 1,
+        "data_size": "64-64-256",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "17/02/2025 17:33:12-UTC",
+        "tag": "Desktop New Experiments Complex Trace Float 64 Shape 64-64-256"
+    },
+    "8c18821d-651f-40d5-840b-76bc1153a14a": {
+        "machine": 1,
+        "data_size": "64-64-512",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "18/02/2025 01:15:34-UTC",
+        "tag": "Desktop New Experiments Complex Trace Float 64 Shape 64-64-512"
+    },
+    "094866de-a5a9-4ee7-8500-b739ab7ac751": {
+        "machine": 1,
+        "data_size": "128-128-512",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "18/02/2025 15:45:19-UTC",
+        "tag": "Desktop New Experiments Complex Trace Float 64 Shape 128-128-512"
+    },
+    "0d7ba2cc-018b-4a0d-a880-79ab08134a83": {
+        "machine": 1,
+        "data_size": "128-128-1024",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "19/02/2025 21:01:07-UTC",
+        "tag": "Desktop New Experiments Complex Trace Float 64 Shape 128-128-1024"
+    },
+    "ff7462e9-398f-4b79-9afa-cbc45b8bad41": {
+        "machine": 1,
+        "data_size": "32-32-32",
+        "dtype": "float32",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "21/02/2025 08:46:22-UTC",
+        "tag": "Desktop New Experiments Conv/GLCM Float 32 Shape 32-32-32"
+    },
+    "fa383379-8a49-4f4e-a103-71ed4c7aa574": {
+        "machine": 1,
+        "data_size": "64-64-64",
+        "dtype": "float32",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "23/02/2025 01:51:03-UTC",
+        "tag": "Desktop New Experiments Conv/GLCM Float 32 Shape 64-64-64"
+    },
+    "41ca0647-d122-455b-91c6-40af94189404": {
+        "machine": 1,
+        "data_size": "128-128-128",
+        "dtype": "float32",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "24/02/2025 21:14:12-UTC",
+        "tag": "Desktop New Experiments Conv/GLCM Float 32 Shape 128-128-128"
+    },
+    "a38eb537-3ab2-4db1-8de1-8c68ed6b3635": {
+        "machine": 1,
+        "data_size": "32-32-32",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "12/03/2025 14:33:12-UTC",
+        "tag": "Desktop New Experiments Conv/GLCM Float 64 Shape 32-32-32"
+    },
+    "2a270f13-b524-417c-80f4-c0c15b4073bb": {
+        "machine": 1,
+        "data_size": "64-64-64",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "13/03/2025 22:24:06-UTC",
+        "tag": "Desktop New Experiments Conv/GLCM Float 64 Shape 64-64-64"
+    },
+    "c7df436a-7db9-4adb-88d5-72c309efa89a": {
+        "machine": 1,
+        "data_size": "128-128-128",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "14/03/2025 03:00:07-UTC",
+        "tag": "Desktop New Experiments Conv/GLCM Float 64 Shape 128-128-128"
     }
 }
