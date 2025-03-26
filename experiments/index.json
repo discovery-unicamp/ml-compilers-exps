@@ -158,5 +158,85 @@
         "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
         "creation_time": "14/03/2025 03:00:07-UTC",
         "tag": "Desktop New Experiments Conv/GLCM Float 64 Shape 128-128-128"
+    },
+    "924aca2d-46ce-425b-bb60-2cd37c7f679e": {
+        "machine": 3,
+        "data_size": "64-64-256",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "17/02/2025 17:41:48-UTC",
+        "tag": "Server II New Experiments Complex Trace Float 64 Shape 64-64-256"
+    },
+    "4e3fabe3-1bb8-4da6-97d9-36969bebf382": {
+        "machine": 3,
+        "data_size": "64-64-512",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "18/02/2025 13:00:49-UTC",
+        "tag": "Server II New Experiments Complex Trace Float 64 Shape 64-64-512"
+    },
+    "91335b86-12a6-44e5-afd0-b51396b78731": {
+        "machine": 3,
+        "data_size": "128-128-512",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "19/02/2025 15:59:10-UTC",
+        "tag": "Server II New Experiments Complex Trace Float 64 Shape 128-128-512"
+    },
+    "fddb4d31-aa04-478e-be65-8e99e909e822": {
+        "machine": 3,
+        "data_size": "128-128-1024",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "21/02/2025 07:53:57-UTC",
+        "tag": "Server II New Experiments Complex Trace Float 64 Shape 128-128-1024"
+    },
+    "96332c73-d44a-4a85-bef1-4436ea1b77c0": {
+        "machine": 3,
+        "data_size": "32-32-32",
+        "dtype": "float32",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "23/02/2025 10:09:15-UTC",
+        "tag": "Server II New Experiments Conv/GLCM Float 32 Shape 32-32-32"
+    },
+    "b30cd493-583c-4c26-9041-231a84c08fbc": {
+        "machine": 3,
+        "data_size": "64-64-64",
+        "dtype": "float32",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "24/02/2025 18:03:54-UTC",
+        "tag": "Server II New Experiments Conv/GLCM Float 32 Shape 64-64-64"
+    },
+    "1bf036c5-f567-44c6-a22a-5db525d96635": {
+        "machine": 3,
+        "data_size": "128-128-128",
+        "dtype": "float32",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "26/02/2025 12:40:08-UTC",
+        "tag": "Server II New Experiments Conv/GLCM Float 32 Shape 128-128-128"
+    },
+    "54205893-aa0e-4385-a282-f6766ce7b0fd": {
+        "machine": 3,
+        "data_size": "32-32-32",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "01/03/2025 14:22:49-UTC",
+        "tag": "Server II New Experiments Conv/GLCM Float 64 Shape 32-32-32"
+    },
+    "b692ec79-ea01-4ef8-b47a-18c9bc824db1": {
+        "machine": 3,
+        "data_size": "64-64-64",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "02/03/2025 18:48:20-UTC",
+        "tag": "Server II New Experiments Conv/GLCM Float 64 Shape 64-64-64"
+    },
+    "5e716e50-6ccb-4fd2-864b-568a3923d573": {
+        "machine": 3,
+        "data_size": "128-128-128",
+        "dtype": "float64",
+        "commit_hash": "d3da088b87ad84465135bb2f768da3c4875481b4",
+        "creation_time": "05/03/2025 12:58:02-UTC",
+        "tag": "Server II New Experiments Conv/GLCM Float 64 Shape 128-128-128"
     }
 }
