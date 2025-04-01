@@ -6,81 +6,72 @@ except:
 import scipy.signal as signal
 import scipy.fft as fft
 
-from dasf.transforms import Transform
+
+class FFT:
+    @staticmethod
+    def _transform_cpu(X):
+        return fft.fft(X, axis=-1)
+
+    @staticmethod
+    def _transform_gpu(X):
+        return cufft.fft(X, axis=-1)
 
 
-class FFT(Transform):
-    def _transform(self, X, xp):
-        return xp.fft(X, axis=-1)
+class Convolve1D:
+    @staticmethod
+    def _transform_cpu(X, w):
+        return signal.convolve(X, w, mode="same", method="direct")
 
-    def _transform_cpu(self, X):
-        return self._transform(X, fft)
-
-    def _transform_gpu(self, X):
-        return self._transform(X, cufft)
-
-
-class Convolve1D(Transform):
-    def _transform(self, X, w, xp):
-        return xp.convolve(X, w, mode="same", method="direct")
-
-    def _transform_cpu(self, X, w):
-        return self._transform(X, w, signal)
-
-    def _transform_gpu(self, X, w):
-        return self._transform(X, w, cusignal)
+    @staticmethod
+    def _transform_gpu(X, w):
+        return cusignal.convolve(X, w, mode="same", method="direct")
 
 
-class Convolve2D(Transform):
-    def _transform(self, X, w, xp):
-        return xp.convolve2d(X, w, mode="same")
+class Convolve2D:
+    @staticmethod
+    def _transform_cpu(X, w):
+        return signal.convolve2d(X, w, mode="same")
 
-    def _transform_cpu(self, X, w):
-        return self._transform(X, w, signal)
-
-    def _transform_gpu(self, X, w):
-        return self._transform(X, w, cusignal)
-
-
-class Convolve3D(Transform):
-    def _transform(self, X, w, xp):
-        return xp.convolve(X, w, mode="same", method="direct")
-
-    def _transform_cpu(self, X, w):
-        return self._transform(X, w, signal)
-
-    def _transform_gpu(self, X, w):
-        return self._transform(X, w, cusignal)
+    @staticmethod
+    def _transform_gpu(X, w):
+        return cusignal.convolve2d(X, w, mode="same")
 
 
-class Correlate1D(Transform):
-    def _transform(self, X, w, xp):
-        return xp.correlate(X, w, mode="same", method="direct")
+class Convolve3D:
+    @staticmethod
+    def _transform_cpu(X, w):
+        return signal.convolve(X, w, mode="same", method="direct")
 
-    def _transform_cpu(self, X, w):
-        return self._transform(X, w, signal)
-
-    def _transform_gpu(self, X, w):
-        return self._transform(X, w, cusignal)
-
-
-class Correlate2D(Transform):
-    def _transform(self, X, w, xp):
-        return xp.correlate2d(X, w, mode="same")
-
-    def _transform_cpu(self, X, w):
-        return self._transform(X, w, signal)
-
-    def _transform_gpu(self, X, w):
-        return self._transform(X, w, cusignal)
+    @staticmethod
+    def _transform_gpu(X, w):
+        return cusignal.convolve(X, w, mode="same", method="direct")
 
 
-class Correlate3D(Transform):
-    def _transform(self, X, w, xp):
-        return xp.correlate(X, w, mode="same", method="direct")
+class Correlate1D:
+    @staticmethod
+    def _transform_cpu(X, w):
+        return signal.correlate(X, w, mode="same", method="direct")
 
-    def _transform_cpu(self, X, w):
-        return self._transform(X, w, signal)
+    @staticmethod
+    def _transform_gpu(X, w):
+        return cusignal.correlate(X, w, mode="same", method="direct")
 
-    def _transform_gpu(self, X, w):
-        return self._transform(X, w, cusignal)
+
+class Correlate2D:
+    @staticmethod
+    def _transform_cpu(X, w):
+        return signal.correlate2d(X, w, mode="same")
+
+    @staticmethod
+    def _transform_gpu(X, w):
+        return cusignal.correlate2d(X, w, mode="same")
+
+
+class Correlate3D:
+    @staticmethod
+    def _transform_cpu(X, w):
+        return signal.correlate(X, w, mode="same", method="direct")
+
+    @staticmethod
+    def _transform_gpu(X, w):
+        return cusignal.correlate(X, w, mode="same", method="direct")

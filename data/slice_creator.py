@@ -4,11 +4,10 @@ import os
 from pathlib import Path
 
 import numpy as np
-from dasf_seismic.datasets import DatasetSEGY
-from dasf.datasets import DatasetArray, DatasetZarr
+import zarr
 
 
-datasets = {"SEG-Y": DatasetSEGY, "Zarr": DatasetZarr, "NPY": DatasetArray}
+datasets = {"Zarr": zarr.open, "NPY": np.load}
 
 
 def creator(args):
@@ -18,11 +17,7 @@ def creator(args):
 
     dataset_configs = json_dict[args.name]
     dataset_loader = datasets[dataset_configs["format"]]
-    dataset = (
-        dataset_loader("dataset", download=False, root=args.dataset)
-        ._lazy_load_cpu()
-        ._data
-    )
+    dataset = dataset_loader(args.dataset)
 
     for sli, sli_conf in dataset_configs["slices"].items():
         sli_size = list(map(int, sli.split("-")))

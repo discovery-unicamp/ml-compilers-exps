@@ -14,7 +14,7 @@ try:
 except:
     pass
 
-from dasf_seismic.attributes.complex_trace import (
+from baseline.complex_trace import (
     Hilbert,
     Envelope,
     InstantaneousPhase,
@@ -33,7 +33,7 @@ from dasf_seismic.attributes.complex_trace import (
     ApparentPolarity,
 )
 
-from dasf_seismic.attributes.texture import (
+from baseline.texture import (
     GLCMASM,
     GLCMContrast,
     GLCMCorrelation,

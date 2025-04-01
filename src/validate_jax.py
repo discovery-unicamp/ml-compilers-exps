@@ -10,8 +10,8 @@ jax.config.update("jax_enable_x64", True)
 
 from pathlib import Path
 from jax_operators.operator_generic import JAXOperator
-from dasf_seismic.attributes.complex_trace import *
-from dasf_seismic.attributes.texture import *
+from baseline.complex_trace import *
+from baseline.texture import *
 from baseline.signal import (
     FFT,
     Convolve1D,

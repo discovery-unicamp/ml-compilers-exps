@@ -1,6 +1,0 @@
-[submodule "dasf-core"]
-	path = dasf-core
-	url = git@github.com:discovery-unicamp/dasf-core.git
-[submodule "dasf-seismic"]
-	path = dasf-seismic
-	url = git@github.com:discovery-unicamp/dasf-seismic-private.git

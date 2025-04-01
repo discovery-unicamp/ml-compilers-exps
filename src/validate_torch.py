@@ -9,8 +9,8 @@ import torch
 
 from pathlib import Path
 from torch_operators.operator_generic import TorchOperator
-from dasf_seismic.attributes.complex_trace import *
-from dasf_seismic.attributes.texture import *
+from baseline.complex_trace import *
+from baseline.texture import *
 from baseline.signal import (
     FFT,
     Convolve1D,

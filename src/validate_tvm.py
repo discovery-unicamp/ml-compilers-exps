@@ -8,8 +8,8 @@ import tvm
 import numpy as np
 
 from tvm_te_operators.operator_generic import TVMOperator
-from dasf_seismic.attributes.complex_trace import *
-from dasf_seismic.attributes.texture import *
+from baseline.complex_trace import *
+from baseline.texture import *
 from baseline.signal import (
     FFT,
     Convolve1D,
