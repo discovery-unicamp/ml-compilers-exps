@@ -85,9 +85,9 @@ def run_experiments(args):
                     ],
                     capture_output=True,
                 )
-                with open(f"{spec.lower()}_cpu_stdout.log", "w") as f:
+                with open(f"{spec.lower()}_cpu_stdout_{exp_id}.log", "w") as f:
                     f.write(process.stdout.decode("ascii"))
-                with open(f"{spec.lower()}_cpu_stderr.log", "w") as f:
+                with open(f"{spec.lower()}_cpu_stderr_{exp_id}.log", "w") as f:
                     f.write(process.stderr.decode("ascii"))
                 
                 if spec == "TVM":
@@ -106,9 +106,9 @@ def run_experiments(args):
                         ],
                         capture_output=True,
                     )
-                    with open(f"{spec.lower()}_2_cpu_stdout.log", "w") as f:
+                    with open(f"{spec.lower()}_2_cpu_stdout_{exp_id}.log", "w") as f:
                         f.write(process.stdout.decode("ascii"))
-                    with open(f"{spec.lower()}_2_cpu_stderr.log", "w") as f:
+                    with open(f"{spec.lower()}_2_cpu_stderr_{exp_id}.log", "w") as f:
                         f.write(process.stderr.decode("ascii"))
 
     if run_specs["GPU"]:
@@ -126,9 +126,9 @@ def run_experiments(args):
                     ],
                     capture_output=True,
                 )
-                with open(f"{spec.lower()}_gpu_stdout.log", "w") as f:
+                with open(f"{spec.lower()}_gpu_stdout_{exp_id}.log", "w") as f:
                     f.write(process.stdout.decode("ascii"))
-                with open(f"{spec.lower()}_gpu_stderr.log", "w") as f:
+                with open(f"{spec.lower()}_gpu_stderr_{exp_id}.log", "w") as f:
                     f.write(process.stderr.decode("ascii"))
 
 

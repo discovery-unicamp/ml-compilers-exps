@@ -12,7 +12,7 @@ MAX_THREADS=$5
 
 export OMP_NUM_THREADS=$MAX_THREADS
 echo "OMP_NUM_THREADS set to ${OMP_NUM_THREADS}"
-python src/run_baseline.py --baseline $env --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE
+python src/run_baseline.py --baseline "default" --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE
 # intel_conda amd amd_gcc openblas
 # for env in  default; do
 #     echo "Running on ${env}"
