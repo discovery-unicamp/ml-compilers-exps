@@ -49,11 +49,11 @@ class FirstDerivative:
 class Hilbert:
     @staticmethod
     def _transform_cpu(X):
-        return signal.fft(X, axis=-1)
+        return signal.hilbert(X, axis=-1)
 
     @staticmethod
     def _transform_gpu(X):
-        return cusignal.fft(X, axis=-1)
+        return cusignal.hilbert(X, axis=-1)
 
 
 class Envelope:

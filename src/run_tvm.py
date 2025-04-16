@@ -33,11 +33,11 @@ attrs = [
     # "response-amplitude",
     # "apparent-polarity",
     "convolve1d",
-    # "correlate1d",
+    "correlate1d",
     "convolve2d",
-    # "correlate2d",
+    "correlate2d",
     "convolve3d",
-    # "correlate3d",
+    "correlate3d",
     "glcm-asm",
     "glcm-contrast",
     # "glcm-correlation",
@@ -128,7 +128,7 @@ def run_attr_op(args, name):
         writer.writerow(
             [
                 name,
-                f"tvm_{args.arch}",
+                f"tvm_{args.arch}_{args.id}",
                 os.getenv("OMP_NUM_THREADS", 0),
                 *execution_times,
                 *execution_times_2,
@@ -189,5 +189,14 @@ if __name__ == "__main__":
         choices=["float32", "float64"],
         default="float64",
     )
+
+    parser.add_argument(
+        "-i",
+        "--id",
+        help="TVM build identifier",
+        type=int,
+        default=1,
+    )
+    
     args = parser.parse_args()
     run_exp(args)

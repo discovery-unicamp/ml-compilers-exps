@@ -73,11 +73,28 @@ operators = {
 class TorchOperator:
     def __init__(self, operator, backend="inductor"):
         function = operators[operator]
+        self.func = function
         torch.compiler.reset()
         self.op = torch.compile(function, backend=backend)
 
     def _transform_cpu(self, *args):
-        return self.op(*args)
+        res = self.op(*args)
+        torch.cpu.synchronize()
+        return res
 
     def _transform_gpu(self, *args):
-        return self.op(*args)
+        res = self.op(*args)
+        torch.cuda.synchronize()
+        return res
+    
+    def _nocompile_cpu(self, *args):
+        res = self.func(*args)
+        torch.cpu.synchronize()
+        return res
+
+    def _nocompile_gpu(self, *args):
+        res = self.func(*args)
+        torch.cuda.synchronize()
+        return res
+    
+

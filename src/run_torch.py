@@ -8,11 +8,9 @@ from multiprocessing import Process
 from pathlib import Path
 
 import numpy as np
-import jax
+import torch
 
-jax.config.update("jax_enable_x64", True)
-
-from jax_operators.operator_generic import JAXOperator
+from torch_operators.operator_generic import TorchOperator
 from utils import extract_data, weights, check_attr_dataset_match
 
 attrs = [
@@ -60,13 +58,14 @@ def run_attr_op(args, name):
     try:
         data = np.load(args.dataset).astype(args.dtype)
         data = extract_data(data, name)
-        data = jax.device_put(data, device=jax.devices(args.arch)[0])
-        op = JAXOperator(name)
+        
+        data = torch.from_numpy(data).to(torch.device("cuda" if args.arch == "gpu" else "cpu"))
+        op = TorchOperator(name)
         if "correlate" in name or "convolve" in name:
             weight = weights[name[-2:]].astype(args.dtype)
-            weight = jax.device_put(weight, device=jax.devices(args.arch)[0])
+            weight = torch.from_numpy(weight).to(torch.device("cuda" if args.arch == "gpu" else "cpu"))
             execution_times = timeit.repeat(
-                f"op._transform_{args.arch}(data, weight)",
+                f"op._{'transform' if args.compile else 'nocompile'}_{args.arch}(data, weight)",
                 repeat=args.repeat,
                 number=1,
                 globals=locals(),
@@ -74,7 +73,7 @@ def run_attr_op(args, name):
             del weight
         else:
             execution_times = timeit.repeat(
-                f"op._transform_{args.arch}(data)",
+                f"op._{'transform' if args.compile else 'nocompile'}_{args.arch}(data)",
                 repeat=args.repeat,
                 number=1,
                 globals=locals(),
@@ -82,19 +81,19 @@ def run_attr_op(args, name):
         del data
         data_2 = np.load(second_dataset).astype(args.dtype)
         data_2 = extract_data(data_2, name)
-        data_2 = jax.device_put(data_2, device=jax.devices(args.arch)[0])
+        data_2 = torch.from_numpy(data_2).to(torch.device("cuda" if args.arch == "gpu" else "cpu"))
         if "correlate" in name or "convolve" in name:
             weight_2 = weights[name[-2:]].astype(args.dtype)
-            weight_2 = jax.device_put(weight_2, device=jax.devices(args.arch)[0])
+            weight_2 = torch.from_numpy(weight_2).to(torch.device("cuda" if args.arch == "gpu" else "cpu"))
             execution_times_2 = timeit.repeat(
-                f"op._transform_{args.arch}(data_2, weight_2)",
+                f"op._{'transform' if args.compile else 'nocompile'}_{args.arch}(data_2, weight_2)",
                 repeat=args.repeat,
                 number=1,
                 globals=locals(),
             )
         else:
             execution_times_2 = timeit.repeat(
-                f"op._transform_{args.arch}(data_2)",
+                f"op._{'transform' if args.compile else 'nocompile'}_{args.arch}(data_2)",
                 repeat=args.repeat,
                 number=1,
                 globals=locals(),
@@ -107,7 +106,7 @@ def run_attr_op(args, name):
         writer.writerow(
             [
                 name,
-                f"jax_{args.arch}",
+                f"torch_{'c' if args.compile else 'n'}_{args.arch}",
                 os.getenv("OMP_NUM_THREADS", 0),
                 *execution_times,
                 *execution_times_2,
@@ -159,6 +158,13 @@ if __name__ == "__main__":
         type=str,
         choices=["float32", "float64"],
         default="float64",
+    )
+
+    parser.add_argument(
+        "-c",
+        "--compile",
+        help="use torch.compile",
+        action="store_true"
     )
     args = parser.parse_args()
     run_exp(args)
