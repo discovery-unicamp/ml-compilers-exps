@@ -100,7 +100,8 @@ def run_attr_op(args, name):
                 globals=locals(),
             )
     except Exception as e:
-        print(traceback(e))
+        print(e)
+        print(traceback.format_exc())
         execution_times = [-1] * args.repeat
     with open(args.file, "a") as csv_file:
         writer = csv.writer(csv_file)
