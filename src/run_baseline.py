@@ -60,7 +60,7 @@ from utils import extract_data, weights, check_attr_dataset_match
 
 attrs = {
     "fft": FFT,
-    "hilbert": Hilbert,
+    # "hilbert": Hilbert,
     "envelope": Envelope,
     "inst-phase": InstantaneousPhase,
     "cos-inst-phase": CosineInstantaneousPhase,
