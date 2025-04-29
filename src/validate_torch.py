@@ -9,53 +9,44 @@ import torch
 
 from pathlib import Path
 from torch_operators.operator_generic import TorchOperator
-from baseline.complex_trace import *
-from baseline.texture import *
-from baseline.signal import (
-    FFT,
-    Convolve1D,
-    Convolve2D,
-    Convolve3D,
-    Correlate1D,
-    Correlate2D,
-    Correlate3D,
-)
+from baseline.operator_generic import BaselineOperator
+
 from utils import extract_data, weights, check_attr_dataset_match
 
-operators = {
-    "fft": FFT,
-    "envelope": Envelope,
-    "inst-phase": InstantaneousPhase,
-    "cos-inst-phase": CosineInstantaneousPhase,
-    "relative-amplitude-change": RelativeAmplitudeChange,
-    "amplitude-acceleration": AmplitudeAcceleration,
-    # "inst-frequency": InstantaneousFrequency,
-    "inst-bandwidth": InstantaneousBandwidth,
-    # "dominant-frequency": DominantFrequency,
-    # "frequency-change": FrequencyChange,
-    # "sweetness": Sweetness,
-    # "quality-factor": QualityFactor,
-    # "response-phase": ResponsePhase,
-    # "response-frequency": ResponseFrequency,
-    # "response-amplitude": ResponseAmplitude,
-    # "apparent-polarity": ApparentPolarity,
-    "convolve1d": Convolve1D,
-    "correlate1d": Correlate1D,
-    "convolve2d": Convolve2D,
-    "correlate2d": Correlate2D,
-    "convolve3d": Convolve3D,
-    "correlate3d": Correlate3D,
-    "glcm-asm": GLCMASM,
-    "glcm-contrast": GLCMContrast,
-    # "glcm-correlation": GLCMCorrelation,
-    "glcm-variance": GLCMVariance,
-    "glcm-energy": GLCMEnergy,
-    "glcm-entropy": GLCMEntropy,
-    "glcm-mean": GLCMMean,
-    "glcm-std": GLCMStandardDeviation,
-    "glcm-dissimilarity": GLCMDissimilarity,
-    "glcm-homogeneity": GLCMHomogeneity,
-}
+operators = [
+    "fft",
+    "envelope",
+    "inst-phase",
+    "cos-inst-phase",
+    "relative-amplitude-change",
+    "amplitude-acceleration",
+    # "inst-frequency",
+    "inst-bandwidth",
+    # "dominant-frequency",
+    # "frequency-change",
+    # "sweetness",
+    # "quality-factor",
+    # "response-phase",
+    # "response-frequency",
+    # "response-amplitude",
+    # "apparent-polarity",
+    "convolve1d",
+    "correlate1d",
+    "convolve2d",
+    "correlate2d",
+    "convolve3d",
+    "correlate3d",
+    "glcm-asm",
+    "glcm-contrast",
+    # "glcm-correlation",
+    "glcm-variance",
+    "glcm-energy",
+    "glcm-entropy",
+    "glcm-mean",
+    "glcm-std",
+    "glcm-dissimilarity",
+    "glcm-homogeneity",
+]
 
 
 def get_git_revision_hash():
@@ -81,8 +72,8 @@ def validate(args):
     dataset_base = os.path.join("data", args.dataset, "*")
     if args.cpu:
         header_arch("CPU", args.file)
-        for op in operators.keys():
-            op_base = operators[op]()
+        for op in operators:
+            op_base = BaselineOperator(op)
             header_op(op, args.file)
             for sh in sorted(glob(dataset_base)):
                 if not check_attr_dataset_match(op, sh.split("/")[-1]):
@@ -126,9 +117,9 @@ def validate(args):
         import cupy as cp
 
         header_arch("GPU", args.file)
-        for op in operators.keys():
+        for op in operators:
             op_torch = TorchOperator(op)
-            op_base = operators[op]()
+            op_base = BaselineOperator(op)
             header_op(op, args.file)
             for sh in sorted(glob(dataset_base)):
                 if not check_attr_dataset_match(op, sh.split("/")[-1]):

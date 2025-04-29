@@ -69,7 +69,7 @@ def run_experiments(args):
 
     if run_specs["CPU"]:
         for spec in ["Baseline", "TVM", "JAX", "TORCH_C", "TORCH_N"]:
-            if run_specs[spec] is not None:
+            if run_specs[spec]:
                 process = subprocess.run(
                     [
                         f"./scripts/run_{spec.lower()}_cpu.sh"

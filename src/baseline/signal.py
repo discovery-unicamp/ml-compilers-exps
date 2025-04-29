@@ -1,6 +1,7 @@
 try:
     import cupyx.scipy.signal as cusignal
     import cupy.fft as cufft
+    import cupy as cp
 except:
     pass
 import scipy.signal as signal
@@ -14,7 +15,9 @@ class FFT:
 
     @staticmethod
     def _transform_gpu(X):
-        return cufft.fft(X, axis=-1)
+        ret = cufft.fft(X, axis=-1)
+        cp.cuda.runtime.deviceSynchronize()
+        return ret
 
 
 class Convolve1D:

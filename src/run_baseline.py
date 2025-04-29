@@ -14,85 +14,45 @@ try:
 except:
     pass
 
-from baseline.complex_trace import (
-    Hilbert,
-    Envelope,
-    InstantaneousPhase,
-    CosineInstantaneousPhase,
-    RelativeAmplitudeChange,
-    AmplitudeAcceleration,
-    InstantaneousFrequency,
-    InstantaneousBandwidth,
-    DominantFrequency,
-    FrequencyChange,
-    Sweetness,
-    QualityFactor,
-    ResponsePhase,
-    ResponseFrequency,
-    ResponseAmplitude,
-    ApparentPolarity,
-)
-
-from baseline.texture import (
-    GLCMASM,
-    GLCMContrast,
-    GLCMCorrelation,
-    GLCMDissimilarity,
-    GLCMEnergy,
-    GLCMEntropy,
-    GLCMHomogeneity,
-    GLCMMean,
-    GLCMStandardDeviation,
-    GLCMVariance,
-)
-
-from baseline.signal import (
-    FFT,
-    Convolve1D,
-    Convolve2D,
-    Convolve3D,
-    Correlate1D,
-    Correlate2D,
-    Correlate3D,
-)
+from baseline.operator_generic import BaselineOperator
 
 from utils import extract_data, weights, check_attr_dataset_match
 
-attrs = {
-    "fft": FFT,
-    # "hilbert": Hilbert,
-    "envelope": Envelope,
-    "inst-phase": InstantaneousPhase,
-    "cos-inst-phase": CosineInstantaneousPhase,
-    "relative-amplitude-change": RelativeAmplitudeChange,
-    "amplitude-acceleration": AmplitudeAcceleration,
-    # "inst-frequency": InstantaneousFrequency,
-    "inst-bandwidth": InstantaneousBandwidth,
-    # "dominant-frequency": DominantFrequency,
-    # "frequency-change": FrequencyChange,
-    # "sweetness": Sweetness,
-    # "quality-factor": QualityFactor,
-    # "response-phase": ResponsePhase,
-    # "response-frequency": ResponseFrequency,
-    # "response-amplitude": ResponseAmplitude,
-    # "apparent-polarity": ApparentPolarity,
-    "convolve1d": Convolve1D,
-    "correlate1d": Correlate1D,
-    "convolve2d": Convolve2D,
-    "correlate2d": Correlate2D,
-    "convolve3d": Convolve3D,
-    "correlate3d": Correlate3D,
-    "glcm-asm": GLCMASM,
-    "glcm-contrast": GLCMContrast,
-    # "glcm-correlation": GLCMCorrelation,
-    "glcm-variance": GLCMVariance,
-    "glcm-energy": GLCMEnergy,
-    "glcm-entropy": GLCMEntropy,
-    "glcm-mean": GLCMMean,
-    "glcm-std": GLCMStandardDeviation,
-    "glcm-dissimilarity": GLCMDissimilarity,
-    "glcm-homogeneity": GLCMHomogeneity,
-}
+attrs = [
+    "fft",
+    # "hilbert",
+    "envelope",
+    "inst-phase",
+    "cos-inst-phase",
+    "relative-amplitude-change",
+    "amplitude-acceleration",
+    # "inst-frequency",
+    "inst-bandwidth",
+    # "dominant-frequency",
+    # "frequency-change",
+    # "sweetness",
+    # "quality-factor",
+    # "response-phase",
+    # "response-frequency",
+    # "response-amplitude",
+    # "apparent-polarity",
+    "convolve1d",
+    "correlate1d",
+    "convolve2d",
+    "correlate2d",
+    "convolve3d",
+    "correlate3d",
+    "glcm-asm",
+    "glcm-contrast",
+    # "glcm-correlation",
+    "glcm-variance",
+    "glcm-energy",
+    "glcm-entropy",
+    "glcm-mean",
+    "glcm-std",
+    "glcm-dissimilarity",
+    "glcm-homogeneity",
+]
 
 
 def run_attr_op(args, name):
@@ -107,7 +67,7 @@ def run_attr_op(args, name):
             if arch == "cpu"
             else cp.load(args.dataset).astype(args.dtype)
         )
-        op = attrs[name]()
+        op = BaselineOperator(name)
         data = extract_data(data, name)
         if "correlate" in name or "convolve" in name:
             weight = weights[name[-2:]].astype(args.dtype)
@@ -168,7 +128,7 @@ def run_attr_op(args, name):
 
 def run_exp(args):
     multiprocessing.set_start_method("spawn", force=True)
-    for name, attr in attrs.items():
+    for name in attrs:
         p = Process(target=run_attr_op, args=(args, name))
         p.start()
         p.join()
