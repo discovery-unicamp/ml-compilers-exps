@@ -35,5 +35,32 @@ def get_chunks(
         in_indices.append(tuple(curr_i))
         padding_indx.append(tuple(curr_p))
     return in_indices, out_indices, padding_indx
+
+
+def get_glcm_chunksize_overlap(
+        rt,
+        exp_shape,
+        window=7,
+):
+    hw = window//2
+    chunksize = [
+        exp_shape[0],
+        exp_shape[1] - 2*hw,
+        exp_shape[2] - 2*hw,
+    ]
+
+
+
+    overlap = [
+        (0, 0),
+        (hw, hw),
+        (hw, hw),
+    ]
+
+    if rt == "tvm":
+        chunksize[0] = chunksize[0] - 1
+        overlap[0] = (0, 1)
+    
+    return chunksize, overlap
     
     

@@ -71,11 +71,12 @@ operators = {
 
 
 class TorchOperator:
-    def __init__(self, operator, backend="inductor"):
+    def __init__(self, operator, backend="inductor", compile=True):
         function = operators[operator]
         self.func = function
-        torch.compiler.reset()
-        self.op = torch.compile(function, backend=backend)
+        if compile:
+            torch.compiler.reset()
+            self.op = torch.compile(function, backend=backend)
 
     def _transform_cpu(self, *args, **kwargs):
         res = self.op(*args, **kwargs)

@@ -3,15 +3,14 @@ import csv
 import os
 from time import perf_counter
 from pathlib import Path
-
+from torch_operators.operator_generic import TorchOperator
 import zarr
 from dask.distributed import Client, LocalCluster
 from dask_cuda import LocalCUDACluster
 
 
 
-# from scalable_integration.complex_trace import hilbert_base, get_hilbert_chunksize_overlap
-from scalable_integration.texture import glcm_base, get_glcm_chunksize_overlap
+from scalable_integration.utils import get_glcm_chunksize_overlap
 from scalable_integration.custom_worker import DaskOperatorWorker
 
 
@@ -25,6 +24,9 @@ def run_exp(attr, rt, device, input_path, output_path, base_path, dtype, shape):
     cluster_kwargs["attribute"] = attr
     cluster_kwargs["device"] = device
     cluster_kwargs["base_path"] = base_path
+    if rt == "torch_c": # torch.compile operators support only one thread per worker and also need to use a multiprocessing module that allows creating child processes from daemons.
+        cluster_kwargs["threads_per_worker"] = 1
+        os.environ["PYTHONPATH"] = os.path.join(os.path.dirname(__file__), "..", "aux_repo")
     if device == "cpu":
         cluster_kwargs["n_workers"] = 1
         cluster = LocalCluster(**cluster_kwargs)
@@ -47,6 +49,7 @@ def run_exp(attr, rt, device, input_path, output_path, base_path, dtype, shape):
     )
 
     if "glcm" in attr:
+        from scalable_integration.texture import glcm_base
         tasks = glcm_base(
             rt=rt,
             input_data=input_data,
