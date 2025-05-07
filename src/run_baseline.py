@@ -113,6 +113,7 @@ def run_attr_op(args, name):
         print(e)
         print(traceback.format_exc())
         execution_times = [-1] * args.repeat
+        execution_times_2 = [-1] * args.repeat
     with open(args.file, "a") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(
