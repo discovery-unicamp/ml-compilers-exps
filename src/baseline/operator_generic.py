@@ -87,10 +87,10 @@ class BaselineOperator:
         self.op = operators[operator](**kwargs)
 
 
-    def _transform_cpu(self, *args):
-        return self.op._transform_cpu(*args)
+    def _transform_cpu(self, *args, **kwargs):
+        return self.op._transform_cpu(*args, **kwargs)
 
-    def _transform_gpu(self, *args):
-        ret = self.op._transform_gpu(*args)
+    def _transform_gpu(self, *args, **kwargs):
+        ret = self.op._transform_gpu(*args, **kwargs)
         cp.cuda.runtime.deviceSynchronize()
         return ret

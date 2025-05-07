@@ -83,8 +83,6 @@ class GLCMGeneric:
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
         preview=None,
     ):
         super().__init__()
@@ -94,8 +92,6 @@ class GLCMGeneric:
         self._direction = direction
         self._distance = distance
         self._window = window
-        self._glb_mi = glb_mi
-        self._glb_ma = glb_ma
         self._preview = preview
 
     def _operation_cpu(
@@ -202,9 +198,9 @@ class GLCMGeneric:
             g[..., glcm_type_block].squeeze(axis=3),
         )
 
-    def _transform_gpu(self, X):
-        mi = cp.min(X) if self._glb_mi is None else self._glb_mi
-        ma = cp.max(X) if self._glb_ma is None else self._glb_ma
+    def _transform_gpu(self, X, glb_mi=None, glb_ma=None):
+        mi = cp.min(X) if glb_mi is None else glb_mi
+        ma = cp.max(X) if glb_ma is None else glb_ma
 
         glcm_type = get_glcm_gpu_feature(self._glcm_type)
         direction = get_glcm_gpu_direction(self._direction)
@@ -218,9 +214,9 @@ class GLCMGeneric:
 
         return X
 
-    def _transform_cpu(self, X):
-        mi = np.min(X) if self._glb_mi is None else self._glb_mi
-        ma = np.max(X) if self._glb_ma is None else self._glb_ma
+    def _transform_cpu(self, X, glb_mi=None, glb_ma=None):
+        mi = np.min(X) if glb_mi is None else glb_mi
+        ma = np.max(X) if glb_ma is None else glb_ma
 
         glcm_type = get_glcm_cpu_feature(self._glcm_type)
 
@@ -243,8 +239,6 @@ class GLCMContrast(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="contrast",
@@ -252,8 +246,6 @@ class GLCMContrast(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )
 
 
@@ -264,8 +256,6 @@ class GLCMDissimilarity(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="dissimilarity",
@@ -273,8 +263,6 @@ class GLCMDissimilarity(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )
 
 
@@ -285,8 +273,6 @@ class GLCMASM(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="asm",
@@ -294,8 +280,6 @@ class GLCMASM(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )
 
 
@@ -306,8 +290,6 @@ class GLCMMean(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="mean",
@@ -315,8 +297,6 @@ class GLCMMean(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )
 
 
@@ -327,8 +307,6 @@ class GLCMCorrelation(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="correlation",
@@ -336,8 +314,6 @@ class GLCMCorrelation(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )
 
 
@@ -348,8 +324,6 @@ class GLCMHomogeneity(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="homogeneity",
@@ -357,8 +331,6 @@ class GLCMHomogeneity(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )
 
 
@@ -369,8 +341,6 @@ class GLCMVariance(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="var",
@@ -378,8 +348,6 @@ class GLCMVariance(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )
 
 
@@ -390,8 +358,6 @@ class GLCMEntropy(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="entropy",
@@ -399,8 +365,6 @@ class GLCMEntropy(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )
 
 
@@ -411,8 +375,6 @@ class GLCMStandardDeviation(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="std",
@@ -420,8 +382,6 @@ class GLCMStandardDeviation(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )
 
 
@@ -432,8 +392,6 @@ class GLCMEnergy(GLCMGeneric):
         direction=np.pi / 2,
         distance=1,
         window=(7, 7),
-        glb_mi=None,
-        glb_ma=None,
     ):
         super().__init__(
             glcm_type="energy",
@@ -441,6 +399,4 @@ class GLCMEnergy(GLCMGeneric):
             direction=direction,
             distance=distance,
             window=window,
-            glb_mi=glb_mi,
-            glb_ma=glb_ma,
         )

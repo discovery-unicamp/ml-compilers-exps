@@ -77,23 +77,23 @@ class TorchOperator:
         torch.compiler.reset()
         self.op = torch.compile(function, backend=backend)
 
-    def _transform_cpu(self, *args):
-        res = self.op(*args)
+    def _transform_cpu(self, *args, **kwargs):
+        res = self.op(*args, **kwargs)
         torch.cpu.synchronize()
         return res
 
-    def _transform_gpu(self, *args):
-        res = self.op(*args)
+    def _transform_gpu(self, *args, **kwargs):
+        res = self.op(*args, **kwargs)
         torch.cuda.synchronize()
         return res
     
-    def _nocompile_cpu(self, *args):
-        res = self.func(*args)
+    def _nocompile_cpu(self, *args, **kwargs):
+        res = self.func(*args, **kwargs)
         torch.cpu.synchronize()
         return res
 
-    def _nocompile_gpu(self, *args):
-        res = self.func(*args)
+    def _nocompile_gpu(self, *args, **kwargs):
+        res = self.func(*args, **kwargs)
         torch.cuda.synchronize()
         return res
     

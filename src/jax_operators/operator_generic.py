@@ -85,8 +85,8 @@ class JAXOperator:
         self._cpu = jit(function, backend="cpu")
         self._gpu = jit(function, backend="cuda")
 
-    def _transform_cpu(self, *args):
-        return self._cpu(*args).block_until_ready()
+    def _transform_cpu(self, *args, **kwargs):
+        return self._cpu(*args, **kwargs).block_until_ready()
 
-    def _transform_gpu(self, *args):
-        return self._gpu(*args).block_until_ready()
+    def _transform_gpu(self, *args, **kwargs):
+        return self._gpu(*args, **kwargs).block_until_ready()
