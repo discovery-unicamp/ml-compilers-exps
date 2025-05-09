@@ -27,6 +27,8 @@ def run_exp(attr, rt, device, input_path, output_path, base_path, dtype, shape):
     if rt == "torch_c": # torch.compile operators support only one thread per worker and also need to use a multiprocessing module that allows creating child processes from daemons.
         cluster_kwargs["threads_per_worker"] = 1
         os.environ["PYTHONPATH"] = os.path.join(os.path.dirname(__file__), "..", "aux_repo")
+    if rt == "tvm" and not(os.path.exists(os.path.join(base_path, f"{attr}_{device}.so"))):
+        raise EnvironmentError("TVM module does not exist")
     if device == "cpu":
         cluster_kwargs["n_workers"] = 1
         cluster = LocalCluster(**cluster_kwargs)
