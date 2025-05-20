@@ -24,8 +24,3 @@ if [[ "$NSYS" == "true" ]]; then
 else
   python -u src/memory_footprint_gpu.py --runtime $RUNTIME --attribute $ATTR --base-path $BASE_PATH --file $CSV --dataset $DATASET --dataset-id $DATASET_ID --dtype $DTYPE
 fi
-
-
-
-# nsys python -u src/memory_footprint_gpu.py --runtime $RUNTIME --attribute $ATTR --base-path $BASE_PATH  --id $ID --file $CSV --input-path $INPUT_PATH --output-path $OUTPUT_PATH --shape $SHAPE --dtype $DTYPE
-

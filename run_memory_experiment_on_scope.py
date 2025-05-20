@@ -225,7 +225,7 @@ if __name__ == "__main__":
         default=1,
     )
 
-    parser.add_argument("-s", "--strategy", help="which profiling startegy to use", choices=["memray", "time", "mprof"])
+    parser.add_argument("-s", "--strategy", help="which profiling startegy to use", default="memray", choices=["memray", "time", "mprof"])
 
     parser.add_argument(
         "-e",

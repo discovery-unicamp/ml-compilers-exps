@@ -100,6 +100,16 @@ python run_experiment_on_scope.py --cpu --gpu --baseline --tvm 1 --jax --sample 
 
 The CLI command presented above runs the CPU (`--cpu`) and GPU (`--gpu`) operatos, for the baselines (`--baseline`), JAX (`--jax`) and TVM operators from Build 1 of the current scope (`--tvm 1`). It will use the sample 1 from the dataset, repeat the measuments 5 times and set OMP_NUM_THREADS to 6. A different Experiment Id can be selected using the `experiment-id` flag.
 
+
+### Running memory profiling experiments
+
+Only MemRay and NsightSystems are installed in the base image, to run `mprof` and `/usr/bin/time` experiments install them with:
+
+```
+pip install memory_profiler
+apt install time
+```
+
 ## Third Party software
 This project includes code based on the following projects:
 - [DASF Seismic](https://github.com/discovery-unicamp/dasf-seismic): MIT License
