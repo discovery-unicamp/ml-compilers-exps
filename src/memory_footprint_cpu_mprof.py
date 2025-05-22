@@ -18,7 +18,7 @@ def measure_tvm(attribute, data_path, dtype, module_path, **kwargs):
     if "correlate" in attribute or "convolve" in attribute:
         from utils import extract_data_tvm, weights_tvm
         data = np.load(data_path).astype(dtype)
-        def run():
+        def run(data):
             data = extract_data_tvm(data, attribute)
             data_tvm = tvm.nd.array(data, device=dev)
             out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
@@ -41,7 +41,7 @@ def measure_tvm(attribute, data_path, dtype, module_path, **kwargs):
             out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
             op.transform(data_tvm, out_tvm)
 
-    mem_trace = memory_usage((run,))
+    mem_trace = memory_usage((run,)) if not ("correlate" in attribute or "convolve" in attribute) else memory_usage((run, (data,)))
 
     mem = max(mem_trace)
 
@@ -59,7 +59,7 @@ def measure_torch(attribute, data_path, dtype, compile, **kwargs):
     if "correlate" in attribute or "convolve" in attribute:
         from utils import extract_data, weights
         data = np.load(data_path).astype(dtype)
-        def run():
+        def run(data):
             data = extract_data(data, attribute)
             data_torch = torch.from_numpy(data).to(dev)
             weight_torch = torch.from_numpy(weights[attribute[-2:]].astype(dtype)).to(dev)
@@ -71,7 +71,7 @@ def measure_torch(attribute, data_path, dtype, compile, **kwargs):
             data_torch = torch.from_numpy(data).to(dev)
             res = method(data_torch)
     
-    mem_trace = memory_usage((run,))
+    mem_trace = memory_usage((run,)) if not ("correlate" in attribute or "convolve" in attribute) else memory_usage((run, (data,)))
 
     mem = max(mem_trace)
 
@@ -88,7 +88,7 @@ def measure_jax(attribute, dtype, data_path, **kwargs):
     if "correlate" in attribute or "convolve" in attribute:
         from utils import extract_data, weights
         data = np.load(data_path).astype(dtype)
-        def run():
+        def run(data):
             data = extract_data(data, attribute)
             data_jax = jax.device_put(data, device=jax.devices("cpu")[0])
             weight_jax = jax.device_put(weights[attribute[-2:]].astype(dtype), device=jax.devices("cpu")[0])
@@ -100,7 +100,7 @@ def measure_jax(attribute, dtype, data_path, **kwargs):
             data_jax = jax.device_put(data, device=jax.devices("cpu")[0])
             res = op._transform_cpu(data_jax)
     
-    mem_trace = memory_usage((run,))
+    mem_trace = memory_usage((run,)) if not ("correlate" in attribute or "convolve" in attribute) else memory_usage((run, (data,)))
 
     mem = max(mem_trace)
 
@@ -115,7 +115,7 @@ def measure_baseline(attribute, dtype, data_path, **kwargs):
     if "correlate" in attribute or "convolve" in attribute:
         from utils import extract_data, weights
         data = np.load(data_path).astype(dtype)
-        def run():
+        def run(data):
             data = extract_data(data, attribute)
             weight = weights[attribute[-2:]].astype(dtype)
             res = op._transform_cpu(data, weight)
@@ -125,7 +125,7 @@ def measure_baseline(attribute, dtype, data_path, **kwargs):
             data = np.load(data_path).astype(dtype)
             res = op._transform_cpu(data)
     
-    mem_trace = memory_usage((run,))
+    mem_trace = memory_usage((run,)) if not ("correlate" in attribute or "convolve" in attribute) else memory_usage((run, (data,)))
 
     mem = max(mem_trace)
     

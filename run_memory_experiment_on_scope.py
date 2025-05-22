@@ -26,6 +26,7 @@ attr_classes = {
         "glcm-homogeneity",
     ],
     "complex_trace": [
+        "fft",
         "envelope",
         "inst-phase",
         "cos-inst-phase",
