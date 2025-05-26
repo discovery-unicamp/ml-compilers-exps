@@ -10,7 +10,7 @@ from dask_cuda import LocalCUDACluster
 
 
 
-from scalable_integration.utils import get_glcm_chunksize_overlap
+from scalable_integration.utils import get_glcm_chunksize_overlap, get_complex_trace_chunksize_overlap, get_conv_chunksize_overlap
 from scalable_integration.custom_worker import DaskOperatorWorker
 
 
@@ -40,6 +40,10 @@ def run_exp(attr, rt, device, input_path, output_path, base_path, dtype, shape):
 
     if "glcm" in attr:
         chunksize, overlap = get_glcm_chunksize_overlap(rt=rt, exp_shape=shape)
+    elif "conv" in attr:
+        chunksize, overlap = get_conv_chunksize_overlap(rt=rt, exp_shape=shape)
+    else:
+        chunksize, overlap = get_complex_trace_chunksize_overlap(rt=rt, exp_shape=shape)
 
 
     input_data = zarr.open(input_path)
@@ -51,16 +55,22 @@ def run_exp(attr, rt, device, input_path, output_path, base_path, dtype, shape):
     )
 
     if "glcm" in attr:
-        from scalable_integration.texture import glcm_base
-        tasks = glcm_base(
-            rt=rt,
-            input_data=input_data,
-            output_data=output_data,
-            chunksize=chunksize,
-            overlap=overlap,
-            dtype=dtype,
-            device=device,
-        )
+        from scalable_integration.texture import glcm_base as get_tasks
+    elif "conv" in attr:
+        from scalable_integration.signal import conv_base as get_tasks
+    else:
+        from scalable_integration.complex_trace import complex_trace_base as get_tasks
+    tasks = get_tasks(
+        rt=rt,
+        input_data=input_data,
+        output_data=output_data,
+        chunksize=chunksize,
+        overlap=overlap,
+        dtype=dtype,
+        device=device,
+    )
+        
+
 
     client.compute(tasks, sync=True)
     end = perf_counter()
@@ -93,6 +103,7 @@ if __name__ == "__main__":
             "relative-amplitude-change",
             "amplitude-acceleration",
             "inst-bandwidth",
+            "convolve3d",
             "glcm-asm",
             "glcm-contrast",
             "glcm-variance",

@@ -62,5 +62,46 @@ def get_glcm_chunksize_overlap(
         overlap[0] = (0, 1)
     
     return chunksize, overlap
+
+def get_conv_chunksize_overlap(
+        rt,
+        exp_shape,
+):
+    chunksize = [
+        exp_shape[0] - 2,
+        exp_shape[1] - 2,
+        exp_shape[2] - 2,
+    ]
+
+
+
+    overlap = [
+        (1, 1),
+        (1, 1),
+        (1, 1),
+    ]
+    
+    return chunksize, overlap
+
+def get_complex_trace_chunksize_overlap(
+        rt,
+        exp_shape,
+):
+    chunksize = [
+        exp_shape[0],
+        exp_shape[1],
+        exp_shape[2] // 2,
+    ]
+
+
+
+    overlap = [
+        (0, 0),
+        (0, 0),
+        (exp_shape[2] // 4, exp_shape[2] // 4),
+    ]
+
+    
+    return chunksize, overlap
     
     

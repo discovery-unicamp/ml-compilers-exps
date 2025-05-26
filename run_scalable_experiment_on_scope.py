@@ -98,7 +98,9 @@ def run_experiments(args):
 
     for attr in attr_classes[shape_map[scope["data_size"]]]:
         if run_specs["CPU"]:
-            for spec in ["TVM", "JAX", "TORCH_C", "TORCH_N"]:
+            for spec in ["Baseline", "TVM", "JAX", "TORCH_C", "TORCH_N"]:
+                if spec == "Baseline" and "glcm" in attr:
+                    continue
                 if run_specs[spec]:
                     output_path = os.path.join(args.output_path, f"{attr}+{spec}+cpu+{exp_id}.zarr")
                     rm_aux_path = Path(output_path)
