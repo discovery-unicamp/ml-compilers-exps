@@ -18,11 +18,11 @@ Stage0 += shell(
         f"conda create -n default python={python_version}",
         "conda activate default",
         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
-                        dacite dask dask_jobqueue dask_memusage GPUtil \
-                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow xarray scikit-image \
-                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
-                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
+                        dacite==1.8.1 dask==2023.3.2 dask_cuda==23.6.0 dask_jobqueue==0.8.2 dask_memusage==1.1 GPUtil==1.4.0 \
+                        gdown==4.7.1 graphviz==0.20.1 h5py==3.10.0 ipympl==0.9.3 matplotlib==3.7.2 memray==1.11.0 networkx==3.2.1 ormsgpack==1.4.1 packaging==23.1 \
+                        portalocker==2.8.2 psutil==5.9.4 pyarrow==11.0.0 xarray==2023.12.0 scikit-image==0.22.0 \
+                        xgboost==1.7.5 zarr==2.16.1 glcm-cupy==0.2.1 multidimio==0.4.2 segyio==1.9.12 segysak==0.3.4 py-cpuinfo==9.0.0 \
+                        bokeh==2.4.3 protobuf==3.20.1 charset-normalizer==2.1.1 tornado==6.1''',
     ]
 )
 
@@ -45,11 +45,11 @@ Stage0 += shell(
         "rm -r build",
         "rm site.cfg",
         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
-                        dacite dask dask_jobqueue dask_memusage GPUtil \
-                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow xarray scikit-image \
-                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
-                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
+                        dacite==1.8.1 dask==2023.3.2 dask_cuda==23.6.0 dask_jobqueue==0.8.2 dask_memusage==1.1 GPUtil==1.4.0 \
+                        gdown==4.7.1 graphviz==0.20.1 h5py==3.10.0 ipympl==0.9.3 matplotlib==3.7.2 memray==1.11.0 networkx==3.2.1 ormsgpack==1.4.1 packaging==23.1 \
+                        portalocker==2.8.2 psutil==5.9.4 pyarrow==11.0.0 xarray==2023.12.0 scikit-image==0.22.0 \
+                        xgboost==1.7.5 zarr==2.16.1 glcm-cupy==0.2.1 multidimio==0.4.2 segyio==1.9.12 segysak==0.3.4 py-cpuinfo==9.0.0 \
+                        bokeh==2.4.3 protobuf==3.20.1 charset-normalizer==2.1.1 tornado==6.1''',
     ]
 )
 
@@ -66,11 +66,11 @@ Stage0 += shell(
         "rm -r build",
         "rm site.cfg",
         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
-                        dacite dask dask_jobqueue dask_memusage GPUtil \
-                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow xarray scikit-image \
-                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
-                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
+                        dacite==1.8.1 dask==2023.3.2 dask_cuda==23.6.0 dask_jobqueue==0.8.2 dask_memusage==1.1 GPUtil==1.4.0 \
+                        gdown==4.7.1 graphviz==0.20.1 h5py==3.10.0 ipympl==0.9.3 matplotlib==3.7.2 memray==1.11.0 networkx==3.2.1 ormsgpack==1.4.1 packaging==23.1 \
+                        portalocker==2.8.2 psutil==5.9.4 pyarrow==11.0.0 xarray==2023.12.0 scikit-image==0.22.0 \
+                        xgboost==1.7.5 zarr==2.16.1 glcm-cupy==0.2.1 multidimio==0.4.2 segyio==1.9.12 segysak==0.3.4 py-cpuinfo==9.0.0 \
+                        bokeh==2.4.3 protobuf==3.20.1 charset-normalizer==2.1.1 tornado==6.1''',
     ]
 )
 
@@ -87,25 +87,26 @@ Stage0 += shell(
         "rm -r build",
         "rm site.cfg",
         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
-                        dacite dask dask_jobqueue dask_memusage GPUtil \
-                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow xarray scikit-image \
-                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
-                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
+                        dacite==1.8.1 dask==2023.3.2 dask_cuda==23.6.0 dask_jobqueue==0.8.2 dask_memusage==1.1 GPUtil==1.4.0 \
+                        gdown==4.7.1 graphviz==0.20.1 h5py==3.10.0 ipympl==0.9.3 matplotlib==3.7.2 memray==1.11.0 networkx==3.2.1 ormsgpack==1.4.1 packaging==23.1 \
+                        portalocker==2.8.2 psutil==5.9.4 pyarrow==11.0.0 xarray==2023.12.0 scikit-image==0.22.0 \
+                        xgboost==1.7.5 zarr==2.16.1 glcm-cupy==0.2.1 multidimio==0.4.2 segyio==1.9.12 segysak==0.3.4 py-cpuinfo==9.0.0 \
+                        bokeh==2.4.3 protobuf==3.20.1 charset-normalizer==2.1.1 tornado==6.1''',
     ]
 )
 
-Stage0 += comment("Intel MKL Conda env")
-Stage0 += shell(
-    commands=[
-        "conda config --add channels intel",
-        f"conda create -n intel_conda intelpython3_core python={python_version}",
-        "conda activate intel_conda",
-        f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
-                        dacite dask dask_jobqueue dask_memusage GPUtil \
-                        gdown graphviz h5py ipympl matplotlib memray networkx ormsgpack packaging \
-                        portalocker psutil pyarrow xarray scikit-image \
-                        xgboost zarr glcm-cupy multidimio segyio segysak py-cpuinfo \
-                        bokeh==2.4.3 \"protobuf<=3.20.1\" \"charset-normalizer<3.0\" \"tornado<6.2\"''',
-    ]
-)
+## Channel is broken
+# Stage0 += comment("Intel MKL Conda env")
+# Stage0 += shell(
+#     commands=[
+#         "conda config --add channels intel",
+#         f"conda create -n intel_conda intelpython3_core python={python_version}",
+#         "conda activate intel_conda",
+#         f'''pip install scipy=={scipy_version} numpy=={numpy_version} jupyter \
+#                         dacite==1.8.1 dask==2023.3.2 dask_cuda==23.6.0 dask_jobqueue==0.8.2 dask_memusage==1.1 GPUtil==1.4.0 \
+#                         gdown==4.7.1 graphviz==0.20.1 h5py==3.10.0 ipympl==0.9.3 matplotlib==3.7.2 memray==1.11.0 networkx==3.2.1 ormsgpack==1.4.1 packaging==23.1 \
+#                         portalocker==2.8.2 psutil==5.9.4 pyarrow==11.0.0 xarray==2023.12.0 scikit-image==0.22.0 \
+#                         xgboost==1.7.5 zarr==2.16.1 glcm-cupy==0.2.1 multidimio==0.4.2 segyio==1.9.12 segysak==0.3.4 py-cpuinfo==9.0.0 \
+#                         bokeh==2.4.3 protobuf==3.20.1 charset-normalizer==2.1.1 tornado==6.1''',
+#     ]
+# )

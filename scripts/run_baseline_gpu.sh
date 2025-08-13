@@ -8,7 +8,7 @@ DTYPE=$4
 
 echo "Running GPU baselines"
 
-eval "$(conda shell.bash hook)"
-conda deactivate
+# eval "$(conda shell.bash hook)"
+# conda deactivate
 
 python src/run_baseline.py --baseline cupy --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE

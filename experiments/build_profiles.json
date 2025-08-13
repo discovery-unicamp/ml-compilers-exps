@@ -14,6 +14,12 @@
                 "+mmx"
             ],
             "fast-math": true
+        },
+        {
+            "kind": "llvm native_flag"
+        },
+        {
+            "kind": "llvm"
         }
     ],
     "gpu": [
@@ -38,6 +44,14 @@
         {
             "tune_options": {
                 "num_measure_trials": 1000
+            },
+            "sketch_policy": {
+                "sample_init_min_population": 1
+            }
+        },
+        {
+            "tune_options": {
+                "num_measure_trials": 10000
             },
             "sketch_policy": {
                 "sample_init_min_population": 1

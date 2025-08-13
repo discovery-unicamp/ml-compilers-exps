@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import subprocess
+from src.utils import check_attr_dataset_match
 
 schedules = {
     "default": 0,
@@ -12,7 +13,7 @@ schedules = {
 }
 
 attr_list = [
-    # "fft",
+    "fft",
     # "ifft",
     # "hilbert",
     "envelope",
@@ -30,6 +31,22 @@ attr_list = [
     # "response-frequency",
     # "response-amplitude",
     # "apparent-polarity",
+    "convolve1d",
+    "correlate1d",
+    "convolve2d",
+    "correlate2d",
+    "convolve3d",
+    "correlate3d",
+    "glcm-asm",
+    "glcm-contrast",
+    # "glcm-correlation",
+    "glcm-variance",
+    "glcm-energy",
+    "glcm-entropy",
+    "glcm-mean",
+    "glcm-std",
+    "glcm-dissimilarity",
+    "glcm-homogeneity"
 ]
 
 
@@ -43,16 +60,30 @@ def build_modules(args):
         )
         scope = scope[exp_id]
     build_index = os.path.join(
-        os.getcwd(), "experiments", "modules", exp_id, "index.json"
+        os.getcwd(), "experiments", "modules_1", exp_id, "index.json"
     )
 
     build_specs = ""
     arch_list = []
-    if args.cpu != -1 and "CPU" in scope:
+    target = []
+    if args.cpu != -1:
         build_specs += f"cpu-{args.cpu}_"
         arch_list.append("cpu")
+        if args.cpu == 2:
+            with open(os.path.join("experiments", "machine_index.json"), "r") as f:
+                index = json.load(f)
+                flag = index[scope["machine"]]["CPU"]["native_flag"]
+            target = [
+                "--target",
+                f"llvm -mcpu={flag}"
+            ]
+        elif args.cpu == 3:
+            target = [
+                "--target",
+                "llvm"
+            ]
     if (
-        args.gpu != -1 and "GPU" in scope and args.scheduler != "default"
+        args.gpu != -1 and args.scheduler != "default"
     ):  # CUDA has no default schedule
         build_specs += f"gpu-{args.gpu}_"
         arch_list.append("gpu")
@@ -60,6 +91,8 @@ def build_modules(args):
         build_specs += f"sch-{schedules[args.scheduler]}_ansor-{args.ansor}"
     else:
         build_specs += f"sch-{schedules[args.scheduler]}"
+    if args.xgboost_model:
+        build_specs += f"_cost-1"
 
     if os.path.isfile(build_index):
         with open(build_index, "r") as f:
@@ -73,14 +106,17 @@ def build_modules(args):
         with open(build_index, "w") as f:
             json.dump({curr_run: build_specs}, f, indent=4)
     build_folder = os.path.join(
-        os.getcwd(), "experiments", "modules", exp_id, f"Build{curr_run:02d}"
+        os.getcwd(), "experiments", "modules_1", exp_id, f"Build{curr_run:02d}"
     )
     os.mkdir(build_folder)
     os.mkdir(os.path.join(build_folder, "logs"))
     x, y, z = scope["data_size"].split("-")
 
     for attr in attr_list:
+        if not check_attr_dataset_match(attr, scope["data_size"]):
+            continue
         for arch in arch_list:
+            build_target = target if arch == "cpu" else []
             process = subprocess.run(
                 [
                     "python",
@@ -103,6 +139,7 @@ def build_modules(args):
                     args.profiles,
                     "--build-path",
                     build_folder,
+                    *build_target
                 ],
                 capture_output=True,
             )
@@ -124,7 +161,7 @@ if __name__ == "__main__":
         "--file",
         help="Experiment Index JSON file path",
         type=Path,
-        default=os.path.join("experiments", "experiment_index.json"),
+        default=os.path.join("experiments", "index.json"),
     )
 
     parser.add_argument(
@@ -140,12 +177,14 @@ if __name__ == "__main__":
         "--cpu",
         help="CPU build profile, if set to -1, will be ignored. Check experiments/build_profiles.json",
         default=-1,
+        type=int
     )
     parser.add_argument(
         "-g",
         "--gpu",
         help="GPU build profile, if set to -1, will be ignored. Check experiments/build_profiles.json",
         default=-1,
+        type=int
     )
     parser.add_argument(
         "-s",
@@ -159,6 +198,7 @@ if __name__ == "__main__":
         "--ansor",
         help="Ansor schedule search policy, relevant only if Ansor is the selected scheduler. Check experiments/build_profiles.json",
         default=0,
+        type=int
     )
 
     parser.add_argument(
@@ -167,6 +207,10 @@ if __name__ == "__main__":
         help="Experiment ID to use, if not set defaults to last on the file",
         type=str,
         default=None,
+    )
+
+    parser.add_argument(
+        "-b", "--xgboost-model", help="Use XGBoost model instead of Random cost model", action="store_true"
     )
 
     args = parser.parse_args()

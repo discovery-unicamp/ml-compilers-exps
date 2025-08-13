@@ -16,15 +16,20 @@ def run_experiments(args):
             else list(scope.keys())[-1]
         )
         scope = scope[exp_id]
+    run_dir = os.path.join(
+        os.getcwd(), "experiments", "results_1", exp_id
+    )
     run_index = os.path.join(
-        os.getcwd(), "experiments", "results", exp_id, "index.json"
+        run_dir, "index.json"
     )
     run_specs = {
-        "CPU": args.cpu and "CPU" in scope,
-        "GPU": args.gpu and "GPU" in scope,
+        "CPU": args.cpu,
+        "GPU": args.gpu,
         "Baseline": args.baseline,
         "TVM": args.tvm,
         "JAX": args.jax,
+        "TORCH_C": args.torch_compile,
+        "TORCH_N": args.torch_nocompile,
         "repeat": args.repeat,
         "dataset": os.path.join(args.dataset, scope["data_size"], f"{args.sample}.npy"),
         "max_threads": args.max_threads,
@@ -38,11 +43,12 @@ def run_experiments(args):
             json.dump(content, f, indent=4)
     else:
         curr_run = 1
+        Path(run_dir).mkdir(parents=True, exist_ok=True)
         with open(run_index, "w") as f:
             json.dump({curr_run: run_specs}, f, indent=4)
 
     csv_file = os.path.join(
-        os.getcwd(), "experiments", "results", exp_id, f"Run{curr_run:02d}.csv"
+        os.getcwd(), "experiments", "results_1", exp_id, f"Run{curr_run:02d}.csv"
     )
     with open(csv_file, "w") as f:
         writer = csv.writer(f)
@@ -58,15 +64,15 @@ def run_experiments(args):
     base_path = ""
     if args.tvm != None:
         base_path = os.path.join(
-            os.getcwd(), "experiments", "modules", exp_id, f"Build{args.tvm:02d}"
+            os.getcwd(), "experiments", "modules_1", exp_id
         )
 
     if run_specs["CPU"]:
-        for spec in ["Baseline", "TVM", "JAX"]:
-            if run_specs[spec] is not None:
+        for spec in ["Baseline", "TVM", "JAX", "TORCH_C", "TORCH_N"]:
+            if run_specs[spec]:
                 process = subprocess.run(
                     [
-                        f"./scripts/run_{spec.lower()}_cpu_{scope['CPU']['arch']}.sh"
+                        f"./scripts/run_{spec.lower()}_cpu.sh"
                         if spec == "Baseline"
                         else f"./scripts/run_{spec.lower()}_cpu.sh",
                         csv_file,
@@ -74,17 +80,39 @@ def run_experiments(args):
                         os.path.join(os.getcwd(), "data", run_specs["dataset"]),
                         scope["dtype"],
                         str(run_specs["max_threads"]),
-                        base_path,
+                        os.path.join(base_path, "Build01"),
+                        "1"
                     ],
                     capture_output=True,
                 )
-                with open(f"{spec.lower()}_cpu_stdout.log", "w") as f:
+                with open(f"{spec.lower()}_cpu_stdout_{exp_id}.log", "w") as f:
                     f.write(process.stdout.decode("ascii"))
-                with open(f"{spec.lower()}_cpu_stderr.log", "w") as f:
+                with open(f"{spec.lower()}_cpu_stderr_{exp_id}.log", "w") as f:
                     f.write(process.stderr.decode("ascii"))
+                
+                if spec == "TVM":
+                    process = subprocess.run(
+                        [
+                            f"./scripts/run_{spec.lower()}_cpu.sh"
+                            if spec == "Baseline"
+                            else f"./scripts/run_{spec.lower()}_cpu.sh",
+                            csv_file,
+                            str(run_specs["repeat"]),
+                            os.path.join(os.getcwd(), "data", run_specs["dataset"]),
+                            scope["dtype"],
+                            str(run_specs["max_threads"]),
+                            os.path.join(base_path, "Build02"),
+                            "2"
+                        ],
+                        capture_output=True,
+                    )
+                    with open(f"{spec.lower()}_2_cpu_stdout_{exp_id}.log", "w") as f:
+                        f.write(process.stdout.decode("ascii"))
+                    with open(f"{spec.lower()}_2_cpu_stderr_{exp_id}.log", "w") as f:
+                        f.write(process.stderr.decode("ascii"))
 
     if run_specs["GPU"]:
-        for spec in ["Baseline", "TVM", "JAX"]:
+        for spec in ["Baseline", "TVM", "JAX", "TORCH_C", "TORCH_N"]:
             if run_specs[spec]:
                 process = subprocess.run(
                     [
@@ -93,13 +121,14 @@ def run_experiments(args):
                         str(run_specs["repeat"]),
                         os.path.join(os.getcwd(), "data", run_specs["dataset"]),
                         scope["dtype"],
-                        base_path,
+                        os.path.join(base_path, "Build03"),
+                        "3"
                     ],
                     capture_output=True,
                 )
-                with open(f"{spec.lower()}_gpu_stdout.log", "w") as f:
+                with open(f"{spec.lower()}_gpu_stdout_{exp_id}.log", "w") as f:
                     f.write(process.stdout.decode("ascii"))
-                with open(f"{spec.lower()}_gpu_stderr.log", "w") as f:
+                with open(f"{spec.lower()}_gpu_stderr_{exp_id}.log", "w") as f:
                     f.write(process.stderr.decode("ascii"))
 
 
@@ -111,7 +140,7 @@ if __name__ == "__main__":
         "--file",
         help="Experiment Index JSON file path",
         type=Path,
-        default=os.path.join("experiments", "experiment_index.json"),
+        default=os.path.join("experiments", "index.json"),
     )
 
     parser.add_argument(
@@ -127,10 +156,13 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument("-b", "--baseline", help="Run baselines", action="store_true")
-    parser.add_argument(
-        "-t", "--tvm", help="Run TVM operators, pass build-id", type=int, default=None
-    )
-    parser.add_argument("-j", "--jax", help="Run JAX operators", action="store_true")
+    parser.add_argument("-t", "--tvm", help="Run TVM operators",  action="store_true")
+
+    parser.add_argument("-j", "--jax", help="Run JAX operators",  action="store_true")
+
+    parser.add_argument("-o", "--torch-compile", help="Run Torch Compile operators", action="store_true")
+
+    parser.add_argument("-n", "--torch-nocompile", help="Run Torch operators without compile", action="store_true")
 
     parser.add_argument(
         "-d",

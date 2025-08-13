@@ -1,0 +1,2 @@
+THIS IS BAD! DON'T DO THIS!!!!!
+I HAD to create a copy of the multiprocessing module to remove the restriction that Daemon processes can't create child processes, otherwise it would be impossible to run torch.compile operators inside a Dask CUDA worker. =(

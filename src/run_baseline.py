@@ -14,46 +14,50 @@ try:
 except:
     pass
 
-from dasf_seismic.attributes.complex_trace import (
-    Hilbert,
-    Envelope,
-    InstantaneousPhase,
-    CosineInstantaneousPhase,
-    RelativeAmplitudeChange,
-    AmplitudeAcceleration,
-    InstantaneousFrequency,
-    InstantaneousBandwidth,
-    DominantFrequency,
-    FrequencyChange,
-    Sweetness,
-    QualityFactor,
-    ResponsePhase,
-    ResponseFrequency,
-    ResponseAmplitude,
-    ApparentPolarity,
-)
+from baseline.operator_generic import BaselineOperator
 
-attrs = {
-    "hilbert": Hilbert,
-    "envelope": Envelope,
-    "inst-phase": InstantaneousPhase,
-    "cos-inst-phase": CosineInstantaneousPhase,
-    "relative-amplitude-change": RelativeAmplitudeChange,
-    "amplitude-acceleration": AmplitudeAcceleration,
-    "inst-frequency": InstantaneousFrequency,
-    "inst-bandwidth": InstantaneousBandwidth,
-    "dominant-frequency": DominantFrequency,
-    "frequency-change": FrequencyChange,
-    "sweetness": Sweetness,
-    "quality-factor": QualityFactor,
-    # "response-phase": ResponsePhase,
-    # "response-frequency": ResponseFrequency,
-    # "response-amplitude": ResponseAmplitude,
-    # "apparent-polarity": ApparentPolarity,
-}
+from utils import extract_data, weights, check_attr_dataset_match
+
+attrs = [
+    "fft",
+    # "hilbert",
+    "envelope",
+    "inst-phase",
+    "cos-inst-phase",
+    "relative-amplitude-change",
+    "amplitude-acceleration",
+    # "inst-frequency",
+    "inst-bandwidth",
+    # "dominant-frequency",
+    # "frequency-change",
+    # "sweetness",
+    # "quality-factor",
+    # "response-phase",
+    # "response-frequency",
+    # "response-amplitude",
+    # "apparent-polarity",
+    "convolve1d",
+    "correlate1d",
+    "convolve2d",
+    "correlate2d",
+    "convolve3d",
+    "correlate3d",
+    "glcm-asm",
+    "glcm-contrast",
+    # "glcm-correlation",
+    "glcm-variance",
+    "glcm-energy",
+    "glcm-entropy",
+    "glcm-mean",
+    "glcm-std",
+    "glcm-dissimilarity",
+    "glcm-homogeneity",
+]
 
 
 def run_attr_op(args, name):
+    if not check_attr_dataset_match(name, args.dataset.parts[-2]):
+        return
     arch = "gpu" if args.baseline == "cupy" else "cpu"
     data_id = int(os.path.basename(args.dataset).split(".")[0])
     second_dataset = os.path.join(os.path.dirname(args.dataset), f"{data_id%5 + 1}.npy")
@@ -63,28 +67,53 @@ def run_attr_op(args, name):
             if arch == "cpu"
             else cp.load(args.dataset).astype(args.dtype)
         )
-        op = attrs[name]()
-        execution_times = timeit.repeat(
-            f"op._transform_{arch}(data)",
-            repeat=args.repeat,
-            number=1,
-            globals=locals(),
-        )
+        op = BaselineOperator(name)
+        data = extract_data(data, name)
+        if "correlate" in name or "convolve" in name:
+            weight = weights[name[-2:]].astype(args.dtype)
+            weight = weight if arch == "cpu" else cp.asarray(weight)
+            execution_times = timeit.repeat(
+                f"op._transform_{arch}(data, weight)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
+            del weight
+        else:
+            execution_times = timeit.repeat(
+                f"op._transform_{arch}(data)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
         del data
         data_2 = (
             np.load(second_dataset).astype(args.dtype)
             if arch == "cpu"
             else cp.load(second_dataset).astype(args.dtype)
         )
-        execution_times_2 = timeit.repeat(
-            f"op._transform_{arch}(data_2)",
-            repeat=args.repeat,
-            number=1,
-            globals=locals(),
-        )
+        data_2 = extract_data(data_2, name)
+        if "correlate" in name or "convolve" in name:
+            weight_2 = weights[name[-2:]].astype(args.dtype)
+            weight_2 = weight_2 if arch == "cpu" else cp.asarray(weight_2)
+            execution_times_2 = timeit.repeat(
+                f"op._transform_{arch}(data_2, weight_2)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
+        else:
+            execution_times_2 = timeit.repeat(
+                f"op._transform_{arch}(data_2)",
+                repeat=args.repeat,
+                number=1,
+                globals=locals(),
+            )
     except Exception as e:
-        print(traceback(e))
+        print(e)
+        print(traceback.format_exc())
         execution_times = [-1] * args.repeat
+        execution_times_2 = [-1] * args.repeat
     with open(args.file, "a") as csv_file:
         writer = csv.writer(csv_file)
         writer.writerow(
@@ -100,7 +129,7 @@ def run_attr_op(args, name):
 
 def run_exp(args):
     multiprocessing.set_start_method("spawn", force=True)
-    for name, attr in attrs.items():
+    for name in attrs:
         p = Process(target=run_attr_op, args=(args, name))
         p.start()
         p.join()

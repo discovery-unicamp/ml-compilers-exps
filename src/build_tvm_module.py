@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 from time import perf_counter
+import numpy as np
 
 import tvm
 from tvm import te, auto_scheduler
@@ -28,6 +29,30 @@ from tvm_te_operators.complex_trace import (
     # ApparentPolarity,
 )
 
+
+from tvm_te_operators.texture.glcm import (
+    GLCMBase,
+    GLCMASM,
+    GLCMContrast,
+    GLCMCorrelation,
+    GLCMVariance,
+    GLCMEnergy,
+    GLCMEntropy,
+    GLCMMean,
+    GLCMStandardDeviation,
+    GLCMDissimilarity,
+    GLCMHomogeneity,
+)
+
+from tvm_te_operators.signal.convolution import (
+    Convolution1D,
+    Correlation1D,
+    Convolution2D,
+    Correlation2D,
+    Convolution3D,
+    Correlation3D,
+)
+
 operators = {
     "fft": FFT,
     "ifft": IFFT,
@@ -47,11 +72,32 @@ operators = {
     # "response-frequency": ResponseFrequency,
     # "response-amplitude": ResponseAmplitude,
     # "apparent-polarity": ApparentPolarity,
+    "convolve1d": Convolution1D,
+    "correlate1d": Correlation1D,
+    "convolve2d": Convolution2D,
+    "correlate2d": Correlation2D,
+    "convolve3d": Convolution3D,
+    "correlate3d": Correlation3D,
+    "glcm-base": GLCMBase,
+    "glcm-asm": GLCMASM,
+    "glcm-contrast": GLCMContrast,
+    "glcm-correlation": GLCMCorrelation,
+    "glcm-variance": GLCMVariance,
+    "glcm-energy": GLCMEnergy,
+    "glcm-entropy": GLCMEntropy,
+    "glcm-mean": GLCMMean,
+    "glcm-std": GLCMStandardDeviation,
+    "glcm-dissimilarity": GLCMDissimilarity,
+    "glcm-homogeneity": GLCMHomogeneity,
 }
 
 
 @auto_scheduler.register_workload
 def search_operator(x, y, z, dtype, operator):
+    if "glcm" in operator and x*y*z >= 2**17: # volumes larger than that result in indexing problems with GLCM
+        x = np.int64(x)
+        y = np.int64(y)
+        z = np.int64(z)
     X = te.placeholder((x, y, z), name="X", dtype=dtype)
     if operator == "ifft":
         Y = te.placeholder((x, y, z), name="Y", dtype=dtype)
@@ -82,11 +128,21 @@ def build_module(args):
     with open(args.profiles, "r") as f:
         profiles = json.load(f)
 
-    tgt = tvm.target.Target(
-        target=profiles[args.arch][build_profile[args.arch]], host="llvm"
-    )
+    if args.target is not None:
+        tgt = tvm.target.Target(args.target)
+    else:
+        tgt = tvm.target.Target(
+            target=profiles[args.arch][build_profile[args.arch]], host="llvm"
+        )
     start = perf_counter()
     name = f"{args.operator}_{args.arch}"
+    x, y, z = args.x, args.y, args.z
+    if "correlate" in args.operator or "convolve" in args.operator:
+        if args.operator[-2:] == "1d":
+            args.x = 1
+            args.y = 1
+        elif args.operator[-2:] == "2d":
+            args.x = 1
     if build_profile["sch"] == 0:  # Default
         computation_context = {
             "x": args.x if args.x else te.var("x"),
@@ -151,7 +207,10 @@ def build_module(args):
                 runner=measure_ctx.runner,
                 **ansor_config["tune_options"],
             )
-        s_p = auto_scheduler.SketchPolicy(task, params=ansor_config["sketch_policy"])
+        if build_profile.get("cost", 0) == 1: # use XGBoost model as cost model
+            s_p = auto_scheduler.SketchPolicy(task, program_cost_model=auto_scheduler.XGBModel(), params=ansor_config["sketch_policy"])
+        else:
+            s_p = auto_scheduler.SketchPolicy(task, params=ansor_config["sketch_policy"])
         task.tune(tune_option, search_policy=s_p)
         schedule, args_tvm = task.apply_best(log_file)
         build = tvm.build(schedule, args_tvm, tgt)
@@ -232,6 +291,10 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "-b", "--build-path", help="path to build folder", type=Path, required=True
+    )
+
+    parser.add_argument(
+        "-t", "--target", help="TVM target string", default=None, type=str
     )
 
     abspath = os.path.abspath(__file__)

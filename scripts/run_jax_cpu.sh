@@ -9,8 +9,8 @@ MAX_THREADS=$5
 
 echo "Running CPU JAX operators"
 
-eval "$(conda shell.bash hook)"
-conda deactivate
+# eval "$(conda shell.bash hook)"
+# conda deactivate
 export JAX_ENABLE_X64=true
 
 export OMP_NUM_THREADS=$MAX_THREADS

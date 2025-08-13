@@ -10,26 +10,44 @@ jax.config.update("jax_enable_x64", True)
 
 from pathlib import Path
 from jax_operators.operator_generic import JAXOperator
-from dasf_seismic.attributes.complex_trace import *
+from baseline.operator_generic import BaselineOperator
 
+from utils import extract_data, weights, check_attr_dataset_match
 
-operators = {
-    "envelope": Envelope,
-    "inst-phase": InstantaneousPhase,
-    "cos-inst-phase": CosineInstantaneousPhase,
-    "relative-amplitude-change": RelativeAmplitudeChange,
-    "amplitude-acceleration": AmplitudeAcceleration,
-    # "inst-frequency": InstantaneousFrequency,
-    "inst-bandwidth": InstantaneousBandwidth,
-    # "dominant-frequency": DominantFrequency,
-    # "frequency-change": FrequencyChange,
-    # "sweetness": Sweetness,
-    # "quality-factor": QualityFactor,
-    # "response-phase": ResponsePhase,
-    # "response-frequency": ResponseFrequency,
-    # "response-amplitude": ResponseAmplitude,
-    # "apparent-polarity": ApparentPolarity,
-}
+operators = [
+    "fft",
+    "envelope",
+    "inst-phase",
+    "cos-inst-phase",
+    "relative-amplitude-change",
+    "amplitude-acceleration",
+    # "inst-frequency",
+    "inst-bandwidth",
+    # "dominant-frequency",
+    # "frequency-change",
+    # "sweetness",
+    # "quality-factor",
+    # "response-phase",
+    # "response-frequency",
+    # "response-amplitude",
+    # "apparent-polarity",
+    "convolve1d",
+    "correlate1d",
+    "convolve2d",
+    "correlate2d",
+    "convolve3d",
+    "correlate3d",
+    "glcm-asm",
+    "glcm-contrast",
+    # "glcm-correlation",
+    "glcm-variance",
+    "glcm-energy",
+    "glcm-entropy",
+    "glcm-mean",
+    "glcm-std",
+    "glcm-dissimilarity",
+    "glcm-homogeneity",
+]
 
 
 def get_git_revision_hash():
@@ -56,19 +74,41 @@ def validate(args):
     dataset_base = os.path.join("data", args.dataset, "*")
     if args.cpu:
         header_arch("CPU", args.file)
-        for op in operators.keys():
+        for op in operators:
             op_jax = JAXOperator(op)
-            op_base = operators[op]()
+            op_base = BaselineOperator(op)
             header_op(op, args.file)
             for sh in sorted(glob(dataset_base)):
+                if not check_attr_dataset_match(op, sh.split("/")[-1]):
+                    continue
                 results = {"float32": [], "float64": []}
                 for dataset in sorted(glob(os.path.join(sh, "*"))):
                     for dtype in results.keys():
                         data = np.load(dataset).astype(dtype)
-                        data_jax = jax.device_put(data, device=jax.devices("cpu")[0])
-                        res_jax = op_jax._transform_cpu(data_jax)
-                        res_base = op_base._transform_cpu(data)
+                        if "convolve" in op or "correlate" in op:
+                            data = extract_data(data, op)
+                            weight = weights[op[-2:]].astype(dtype)
+                            data_jax = jax.device_put(
+                                data, device=jax.devices("cpu")[0]
+                            )
+                            weight_jax = jax.device_put(
+                                weight, device=jax.devices("cpu")[0]
+                            )
+                            res_jax = op_jax._transform_cpu(data_jax, weight_jax)
+                            res_base = op_base._transform_cpu(data, weight)
+                        else:
+                            data_jax = jax.device_put(
+                                data, device=jax.devices("cpu")[0]
+                            )
+                            res_jax = op_jax._transform_cpu(data_jax)
+                            if "glcm" in op:  # GLCM baseline on CPU is too slow
+                                import cupy as cp
+
+                                res_base = op_base._transform_gpu(cp.array(data)).get()
+                            else:
+                                res_base = op_base._transform_cpu(data)
                         err = np.abs(res_jax - res_base)
+                        res_base[res_base == 0] = 1 # err_rel computation retain abs err
                         err_rel = np.abs(err / res_base)
                         results[dtype].append(
                             (err.mean(), err.std(), err.max(), err_rel.max())
@@ -85,20 +125,39 @@ def validate(args):
         import cupy as cp
 
         header_arch("GPU", args.file)
-        for op in operators.keys():
+        for op in operators:
             op_jax = JAXOperator(op)
-            op_base = operators[op]()
+            op_base = BaselineOperator(op)
             header_op(op, args.file)
             for sh in sorted(glob(dataset_base)):
+                if not check_attr_dataset_match(op, sh.split("/")[-1]):
+                    continue
                 results = {"float32": [], "float64": []}
                 for dataset in sorted(glob(os.path.join(sh, "*"))):
                     for dtype in results.keys():
                         data = np.load(dataset).astype(dtype)
-                        data_jax = jax.device_put(data, device=jax.devices("gpu")[0])
-                        data = cp.asarray(data)
-                        res_jax = op_jax._transform_gpu(data_jax)
-                        res_base = op_base._transform_gpu(data)
+                        if "convolve" in op or "correlate" in op:
+                            data = extract_data(data, op)
+                            weight = weights[op[-2:]].astype(dtype)
+                            data_jax = jax.device_put(
+                                data, device=jax.devices("gpu")[0]
+                            )
+                            weight_jax = jax.device_put(
+                                weight, device=jax.devices("gpu")[0]
+                            )
+                            data = cp.asarray(data)
+                            weight = cp.asarray(weight)
+                            res_jax = op_jax._transform_gpu(data_jax, weight_jax)
+                            res_base = op_base._transform_gpu(data, weight)
+                        else:
+                            data_jax = jax.device_put(
+                                data, device=jax.devices("gpu")[0]
+                            )
+                            data = cp.asarray(data)
+                            res_jax = op_jax._transform_gpu(data_jax)
+                            res_base = op_base._transform_gpu(data)
                         err = cp.abs(res_jax - res_base)
+                        res_base[res_base == 0] = 1 # err_rel computation retain abs err
                         err_rel = cp.abs(err / res_base)
                         results[dtype].append(
                             (err.mean(), err.std(), err.max(), err_rel.max())

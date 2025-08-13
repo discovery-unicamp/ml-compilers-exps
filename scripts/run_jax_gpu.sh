@@ -8,7 +8,7 @@ DTYPE=$4
 
 echo "Running GPU JAX operators"
 
-eval "$(conda shell.bash hook)"
-conda deactivate
+# eval "$(conda shell.bash hook)"
+# conda deactivate
 export JAX_ENABLE_X64=true
 python src/run_jax.py --arch gpu --file $CSV --repeat $REPEAT --dataset $DATASET --dtype $DTYPE

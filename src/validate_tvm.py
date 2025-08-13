@@ -8,25 +8,44 @@ import tvm
 import numpy as np
 
 from tvm_te_operators.operator_generic import TVMOperator
-from dasf_seismic.attributes.complex_trace import *
+from baseline.operator_generic import BaselineOperator
 
-operators = {
-    "envelope": Envelope,
-    "inst-phase": InstantaneousPhase,
-    "cos-inst-phase": CosineInstantaneousPhase,
-    "relative-amplitude-change": RelativeAmplitudeChange,
-    "amplitude-acceleration": AmplitudeAcceleration,
-    "inst-frequency": InstantaneousFrequency,
-    "inst-bandwidth": InstantaneousBandwidth,
-    "dominant-frequency": DominantFrequency,
-    "frequency-change": FrequencyChange,
-    "sweetness": Sweetness,
-    "quality-factor": QualityFactor,
-    # "response-phase": ResponsePhase,
-    # "response-frequency": ResponseFrequency,
-    # "response-amplitude": ResponseAmplitude,
-    # "apparent-polarity": ApparentPolarity,
-}
+from utils import extract_data, extract_data_tvm, weights, weights_tvm, check_attr_dataset_match
+
+operators = [
+    "fft",
+    "envelope",
+    "inst-phase",
+    "cos-inst-phase",
+    "relative-amplitude-change",
+    "amplitude-acceleration",
+    # "inst-frequency",
+    "inst-bandwidth",
+    # "dominant-frequency",
+    # "frequency-change",
+    # "sweetness",
+    # "quality-factor",
+    # "response-phase",
+    # "response-frequency",
+    # "response-amplitude",
+    # "apparent-polarity",
+    "convolve1d",
+    "correlate1d",
+    "convolve2d",
+    "correlate2d",
+    "convolve3d",
+    "correlate3d",
+    "glcm-asm",
+    "glcm-contrast",
+    # "glcm-correlation",
+    "glcm-variance",
+    "glcm-energy",
+    "glcm-entropy",
+    "glcm-mean",
+    "glcm-std",
+    "glcm-dissimilarity",
+    "glcm-homogeneity",
+]
 
 
 def header_arch(arch, filepath):
@@ -53,7 +72,7 @@ def validate(args):
         build_id = args.build
     else:
         with open(
-            os.path.join(os.getcwd(), "experiments", "modules", exp_id, "index.json")
+            os.path.join(os.getcwd(), "experiments", "modules_1", exp_id, "index.json")
         ) as f:
             index_build = json.load(f)
             build_id = int(list(index_build.keys())[-1])
@@ -62,7 +81,7 @@ def validate(args):
             os.path.join(
                 os.getcwd(),
                 "experiments",
-                "modules",
+                "modules_1",
                 exp_id,
                 f"Build{build_id:02d}",
                 "*_cpu.so",
@@ -72,7 +91,7 @@ def validate(args):
             os.path.join(
                 os.getcwd(),
                 "experiments",
-                "modules",
+                "modules_1",
                 exp_id,
                 f"Build{build_id:02d}",
                 "*_gpu.so",
@@ -91,16 +110,47 @@ def validate(args):
             if not (op in operators):
                 continue
             op_tvm = TVMOperator(module, dev)
-            op_base = operators[op]()
+            op_base = BaselineOperator(op)
             header_op(op, args.file)
             result = []
             for dataset in sorted(glob(os.path.join(dataset_base, "*"))):
                 data = np.load(dataset).astype(dtype)
-                data_tvm = tvm.nd.array(data, device=dev)
-                out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
-                op_tvm.transform(data_tvm, out_tvm)
-                res_base = op_base._transform_cpu(data)
-                err = np.abs(out_tvm.numpy() - res_base)
+                if "convolve" in op or "correlate" in op:
+                    data_tvm = extract_data_tvm(data, op)
+                    data = extract_data(data, op)
+                    weight_tvm = weights_tvm[op[-2:]].astype(dtype)
+                    weight = weights[op[-2:]].astype(dtype)
+                    data_tvm = tvm.nd.array(data_tvm, device=dev)
+                    weight_tvm = tvm.nd.array(weight_tvm, device=dev)
+                    out_tvm = tvm.nd.empty(
+                        data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                    )
+                    op_tvm.transform(data_tvm, weight_tvm, out_tvm)
+                    res_base = op_base._transform_cpu(data, weight)
+                else:
+                    data_tvm = tvm.nd.array(data, device=dev)
+                    out_tvm = tvm.nd.empty(
+                        data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                    )
+                    if op == "fft":
+                        out_tvm_2 = tvm.nd.empty(
+                            data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                        )
+                        op_tvm.transform(data_tvm, out_tvm, out_tvm_2)
+                    else:
+                        op_tvm.transform(data_tvm, out_tvm)
+                    if "glcm" in op:  # GLCM baseline on CPU is too slow
+                        import cupy as cp
+
+                        res_base = op_base._transform_gpu(cp.array(data)).get()
+                    else:
+                        res_base = op_base._transform_cpu(data)
+                if op == "fft": # FFT produces complex number
+                    out = out_tvm.numpy() + 1j*out_tvm_2.numpy()
+                else:
+                    out = out_tvm.numpy()
+                err = np.abs(out - res_base)
+                res_base[res_base == 0] = 1 # err_rel computation retain abs err
                 err_rel = np.abs(err / res_base)
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))
             with open(args.file, "a") as f:
@@ -118,17 +168,45 @@ def validate(args):
             if not (op in operators):
                 continue
             op_tvm = TVMOperator(module, dev)
-            op_base = operators[op]()
+            op_base = BaselineOperator(op)
             header_op(op, args.file)
             result = []
             for dataset in sorted(glob(os.path.join(dataset_base, "*"))):
                 data = np.load(dataset).astype(dtype)
-                data_tvm = tvm.nd.array(data, device=dev)
-                out_tvm = tvm.nd.empty(data_tvm.shape, dtype=data_tvm.dtype, device=dev)
-                data = cp.asarray(data)
-                op_tvm.transform(data_tvm, out_tvm)
-                res_base = op_base._transform_gpu(data)
-                err = np.abs(out_tvm.numpy() - res_base.get())
+                if "convolve" in op or "correlate" in op:
+                    data_tvm = extract_data_tvm(data, op)
+                    data = extract_data(data, op)
+                    weight_tvm = weights_tvm[op[-2:]].astype(dtype)
+                    weight = weights[op[-2:]].astype(dtype)
+                    data_tvm = tvm.nd.array(data_tvm, device=dev)
+                    weight_tvm = tvm.nd.array(weight_tvm, device=dev)
+                    data = cp.asarray(data)
+                    weight = cp.asarray(weight)
+                    out_tvm = tvm.nd.empty(
+                        data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                    )
+                    op_tvm.transform(data_tvm, weight_tvm, out_tvm)
+                    res_base = op_base._transform_gpu(data, weight)
+                else:
+                    data_tvm = tvm.nd.array(data, device=dev)
+                    out_tvm = tvm.nd.empty(
+                        data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                    )
+                    data = cp.asarray(data)
+                    if op == "fft":
+                        out_tvm_2 = tvm.nd.empty(
+                            data_tvm.shape, dtype=data_tvm.dtype, device=dev
+                        )
+                        op_tvm.transform(data_tvm, out_tvm, out_tvm_2)
+                    else:
+                        op_tvm.transform(data_tvm, out_tvm)
+                    res_base = op_base._transform_gpu(data)
+                if op == "fft": # FFT produces complex number
+                    out = out_tvm.numpy() + 1j*out_tvm_2.numpy()
+                else:
+                    out = out_tvm.numpy()
+                err = np.abs(out - res_base.get())
+                res_base[res_base == 0] = 1 # err_rel computation retain abs err
                 err_rel = np.abs(err / res_base.get())
                 result.append((err.mean(), err.std(), err.max(), err_rel.max()))
             with open(args.file, "a") as f:
@@ -146,7 +224,7 @@ if __name__ == "__main__":
         "--index",
         help="Experiment Index JSON file path",
         type=Path,
-        default=os.path.join("experiments", "experiment_index.json"),
+        default=os.path.join("experiments", "index.json"),
     )
 
     parser.add_argument(
